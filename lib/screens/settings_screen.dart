@@ -47,6 +47,18 @@ class SettingsScreen extends StatelessWidget {
                 'COMING SOON',
                 trailing: Switch(value: false, onChanged: (v) {}, activeColor: AppColors.primary),
               ),
+              _buildSettingItem(
+                Icons.language_rounded,
+                'Language',
+                'English (US)',
+                trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textGrey),
+              ),
+              _buildSettingItem(
+                Icons.vibration_rounded,
+                'Haptic Feedback',
+                'Subtle vibrations for actions',
+                trailing: Switch(value: true, onChanged: (v) {}, activeColor: AppColors.primary),
+              ),
             ]),
             const SizedBox(height: 24),
             _buildSettingsGroup('Stats', [
@@ -69,6 +81,27 @@ class SettingsScreen extends StatelessWidget {
                 Icons.security_rounded,
                 'SECURITY',
                 'Two-Factor Auth',
+                trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textGrey),
+              ),
+              _buildSettingItem(
+                Icons.delete_outline_rounded,
+                'Manage Data',
+                'Export or delete your history',
+                trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textGrey),
+              ),
+            ]),
+            const SizedBox(height: 24),
+            _buildSettingsGroup('Support', [
+              _buildSettingItem(
+                Icons.help_outline_rounded,
+                'Help Center',
+                'FAQs and guide',
+                trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textGrey),
+              ),
+              _buildSettingItem(
+                Icons.chat_bubble_outline_rounded,
+                'Contact Us',
+                '',
                 trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textGrey),
               ),
             ]),
