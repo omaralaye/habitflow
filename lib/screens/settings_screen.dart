@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/constants.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -6,195 +7,209 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
-              _buildProfileCard(),
-              _buildSettingsSection(),
-              _buildAboutSection(),
-              const SizedBox(height: 24),
-            ],
-          ),
+      backgroundColor: AppColors.primaryLighter,
+      appBar: AppBar(
+        title: const Text('Settings'),
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textDark),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Refine your sanctuary and pace.',
+              style: TextStyle(fontSize: 14, color: AppColors.textGrey),
+            ),
+            const SizedBox(height: 32),
+            _buildSettingsGroup('Reminders', [
+              _buildSettingItem(
+                Icons.notifications_active_rounded,
+                'Push Notifications',
+                'Daily nudges to keep your flow.',
+                trailing: Switch(value: true, onChanged: (v) {}, activeColor: AppColors.primary),
+              ),
+              _buildSettingItem(
+                Icons.nights_stay_rounded,
+                'Quiet Hours',
+                '10:00 PM — 07:00 AM',
+                trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textGrey),
+              ),
+            ]),
+            const SizedBox(height: 24),
+            _buildSettingsGroup('Display', [
+              _buildSettingItem(
+                Icons.palette_rounded,
+                'Dark Mode',
+                'COMING SOON',
+                trailing: Switch(value: false, onChanged: (v) {}, activeColor: AppColors.primary),
+              ),
+            ]),
+            const SizedBox(height: 24),
+            _buildSettingsGroup('Stats', [
+              _buildSettingItem(
+                Icons.auto_graph_rounded,
+                'Weekly Digest',
+                '',
+                trailing: Switch(value: true, onChanged: (v) {}, activeColor: AppColors.primary),
+              ),
+            ]),
+            const SizedBox(height: 24),
+            _buildSettingsGroup('Account', [
+              _buildSettingItem(
+                Icons.email_rounded,
+                'EMAIL ADDRESS',
+                'alex.flow@example.com',
+                trailing: const Icon(Icons.edit_rounded, size: 18, color: AppColors.textGrey),
+              ),
+              _buildSettingItem(
+                Icons.security_rounded,
+                'SECURITY',
+                'Two-Factor Auth',
+                trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textGrey),
+              ),
+            ]),
+            const SizedBox(height: 48),
+            _buildSignOutButton(),
+            const SizedBox(height: 48),
+            const Center(
+              child: Column(
+                children: [
+                  Text(
+                    'HABIT FLOW V2.4.0',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textGrey,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('Privacy Policy', style: TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w600)),
+                      SizedBox(width: 24),
+                      Text('Terms of Service', style: TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Settings',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
+  Widget _buildSettingsGroup(String title, List<Widget> children) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 8.0, bottom: 12.0),
+          child: Row(
+            children: [
+              const Icon(Icons.circle, size: 8, color: AppColors.primary),
+              const SizedBox(width: 12),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textDark,
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Column(
+            children: List.generate(children.length, (index) {
+              return Column(
+                children: [
+                  children[index],
+                  if (index < children.length - 1)
+                    Divider(height: 1, color: AppColors.primaryLighter),
+                ],
+              );
+            }),
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildProfileCard() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
+  Widget _buildSettingItem(IconData icon, String title, String subtitle, {required Widget trailing}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 20),
       child: Row(
         children: [
           Container(
-            width: 70,
-            height: 70,
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: const Color(0xFFE0E0E0),
-              shape: BoxShape.circle,
+              color: AppColors.primaryLighter,
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.person, color: Colors.grey, size: 40),
+            child: Icon(icon, color: AppColors.primary, size: 22),
           ),
-          const SizedBox(width: 16),
-          const Expanded(
+          const SizedBox(width: 20),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'John Doe',
-                  style: TextStyle(
-                    fontSize: 20,
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
+                    color: AppColors.textDark,
                   ),
                 ),
-                SizedBox(height: 4),
-                Text(
-                  'john.doe@email.com',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.black54,
+                if (subtitle.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textGrey,
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
-          const Icon(Icons.chevron_right, color: Colors.black26),
+          trailing,
         ],
       ),
     );
   }
 
-  Widget _buildSettingsSection() {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'General',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Colors.black54,
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildSettingItem(Icons.notifications, 'Notifications', 'On'),
-          _buildSettingItem(Icons.dark_mode, 'Dark Mode', 'Off'),
-          _buildSettingItem(Icons.language, 'Language', 'English'),
-          _buildSettingItem(Icons.access_time, 'Time Zone', 'UTC-5'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSettingItem(IconData icon, String title, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF5F5F5),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: const Color(0xFF9B59B6), size: 20),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.black54,
-            ),
-          ),
-          const SizedBox(width: 8),
-          const Icon(Icons.chevron_right, color: Colors.black26, size: 20),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAboutSection() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'About',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Colors.black54,
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildSettingItem(Icons.info, 'App Version', '1.0.0'),
-          _buildSettingItem(Icons.privacy_tip, 'Privacy Policy', ''),
-          _buildSettingItem(Icons.description, 'Terms of Service', ''),
-          const SizedBox(height: 16),
-          Center(
-            child: TextButton(
-              onPressed: () {},
-              child: const Text(
-                'Sign Out',
-                style: TextStyle(
-                  color: Colors.red,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-        ],
+  Widget _buildSignOutButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 60,
+      child: ElevatedButton(
+        onPressed: () {},
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primaryLighter.withValues(alpha: 0.5),
+          foregroundColor: AppColors.accentRed,
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        ),
+        child: const Text(
+          'Sign Out',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
       ),
     );
   }

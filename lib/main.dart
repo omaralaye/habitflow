@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'screens/home_screen.dart';
+import 'utils/constants.dart';
+import 'widgets/main_navigation.dart';
 
 void main() {
   runApp(const MyApp());
@@ -11,13 +12,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'HabitFlow',
+      title: 'Sanctuary',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF9B59B6)),
-        useMaterial3: true,
-      ),
-      home: const HomeScreen(),
+      theme: AppStyles.theme,
+      home: const MainNavigation(),
     );
   }
 }
