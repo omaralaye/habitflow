@@ -1,356 +1,340 @@
 import 'package:flutter/material.dart';
+import '../utils/constants.dart';
+import '../services/mock_data_service.dart';
+import '../models/habit_model.dart';
 
-class HabitDetailScreen extends StatelessWidget {
+class HabitDetailScreen extends StatefulWidget {
   const HabitDetailScreen({super.key});
+
+  @override
+  State<HabitDetailScreen> createState() => _HabitDetailScreenState();
+}
+
+class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  final HabitModel habit = MockDataService.habits[0];
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Habit Detail',
-          style: TextStyle(
-            color: Colors.black87,
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        centerTitle: true,
+        title: Text(habit.name),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.black87),
-            onPressed: () {},
+          IconButton(onPressed: () {}, icon: const Icon(Icons.edit_rounded, color: AppColors.primary)),
+          const SizedBox(width: 8),
+        ],
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            child: Container(
+              height: 50,
+              decoration: BoxDecoration(
+                color: AppColors.primaryLighter,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: TabBar(
+                controller: _tabController,
+                indicator: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  color: AppColors.primary,
+                ),
+                indicatorSize: TabBarIndicatorSize.tab,
+                labelColor: Colors.white,
+                unselectedLabelColor: AppColors.textGrey,
+                dividerColor: Colors.transparent,
+                labelStyle: const TextStyle(fontWeight: FontWeight.bold),
+                tabs: const [
+                  Tab(text: 'Mascot'),
+                  Tab(text: 'Streaks'),
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildMascotTab(),
+                _buildStreaksTab(),
+              ],
+            ),
           ),
         ],
       ),
-      body: const SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _ProfileSection(),
-            _StatsSection(),
-          ],
-        ),
-      ),
     );
   }
-}
 
-class _ProfileSection extends StatelessWidget {
-  const _ProfileSection();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
+  Widget _buildMascotTab() {
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-      ),
       child: Column(
         children: [
           Container(
-            width: 80,
-            height: 80,
+            padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: const Color(0xFFE0E0E0),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: const Color(0xFF9B59B6),
-                width: 3,
-              ),
+              color: MockDataService.getPastelColorForMascot(habit.mascot),
+              borderRadius: BorderRadius.circular(32),
             ),
-            child: const Icon(
-              Icons.spa,
-              size: 40,
-              color: Color(0xFF9B59B6),
+            child: Column(
+              children: [
+                Text(
+                  MockDataService.mascotToEmoji(habit.mascot),
+                  style: const TextStyle(fontSize: 120),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  '${habit.mascot.name.toUpperCase()} LVL ${habit.mascotLevel}',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textDark,
+                    letterSpacing: 2,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                _buildEvolutionProgress(),
+              ],
             ),
           ),
-          const SizedBox(height: 16),
-          const Text(
-            'Meditation',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 32),
-            child: Text(
-              'Take 10 minutes to practice mindfulness and meditation',
-              textAlign: TextAlign.center,
+          const SizedBox(height: 32),
+          _buildMascotStatus(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEvolutionProgress() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'EVOLUTION PROGRESS',
               style: TextStyle(
-                fontSize: 14,
-                color: Colors.black54,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textGrey,
+                letterSpacing: 1.2,
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatsSection extends StatelessWidget {
-  const _StatsSection();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Streaks',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-          SizedBox(height: 12),
-          _FilterTabs(),
-          SizedBox(height: 24),
-          _ProgressCard(),
-          SizedBox(height: 16),
-          _WeeklyProgress(),
-        ],
-      ),
-    );
-  }
-}
-
-class _FilterTabs extends StatefulWidget {
-  const _FilterTabs();
-
-  @override
-  State<_FilterTabs> createState() => _FilterTabsState();
-}
-
-class _FilterTabsState extends State<_FilterTabs> {
-  bool _isThisWeek = true;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _isThisWeek = true),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  color: _isThisWeek ? const Color(0xFF9B59B6) : Colors.transparent,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Center(
-                  child: Text(
-                    'This Week',
-                    style: TextStyle(
-                      color: _isThisWeek ? Colors.white : Colors.black54,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
+            Text(
+              '75%',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textDark,
               ),
             ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: const LinearProgressIndicator(
+            value: 0.75,
+            minHeight: 12,
+            backgroundColor: Colors.white,
+            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
           ),
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _isThisWeek = false),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                child: Center(
-                  child: Text(
-                    'This Month',
-                    style: TextStyle(
-                      color: !_isThisWeek ? Colors.black87 : Colors.black54,
-                      fontWeight: !_isThisWeek ? FontWeight.w600 : FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
-            ),
+        ),
+        const SizedBox(height: 12),
+        const Text(
+          'Keep going to evolve into a Giant Panda!',
+          style: TextStyle(
+            fontSize: 12,
+            color: AppColors.textGrey,
+            fontStyle: FontStyle.italic,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
-}
 
-class _ProgressCard extends StatelessWidget {
-  const _ProgressCard();
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildMascotStatus() {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.primaryLighter,
+        borderRadius: BorderRadius.circular(24),
       ),
       child: const Row(
         children: [
-          Expanded(child: _CircularProgress()),
-          Expanded(child: _StreakCounter()),
+          Icon(Icons.auto_awesome_rounded, color: AppColors.primary),
+          SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              'Your panda is feeling energized today because of your consistent meditation practice!',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.textDark,
+                height: 1.4,
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
-}
 
-class _CircularProgress extends StatelessWidget {
-  const _CircularProgress();
+  Widget _buildStreaksTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildStreakSummary(),
+          const SizedBox(height: 24),
+          const Text(
+            'Weekly History',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textDark,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildWeeklyHistory(),
+          const SizedBox(height: 24),
+          _buildBestStreaks(),
+        ],
+      ),
+    );
+  }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildStreakSummary() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(32),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildStreakStat('Current', '${habit.streak}', 'days'),
+          Container(width: 1, height: 40, color: Colors.white24),
+          _buildStreakStat('Best', '28', 'days'),
+          Container(width: 1, height: 40, color: Colors.white24),
+          _buildStreakStat('Total', '156', 'done'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStreakStat(String label, String value, String unit) {
     return Column(
       children: [
-        SizedBox(
-          width: 120,
-          height: 120,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              SizedBox(
-                width: 120,
-                height: 120,
-                child: CircularProgressIndicator(
-                  value: 1.0,
-                  strokeWidth: 10,
-                  backgroundColor: const Color(0xFFE8E8E8),
-                  valueColor: const AlwaysStoppedAnimation<Color>(
-                    Color(0xFF9B59B6),
-                  ),
-                ),
-              ),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    '7/7',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE8F5E9),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: const Text(
-                      'Best',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF4CAF50),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _StreakCounter extends StatelessWidget {
-  const _StreakCounter();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: const [
         Text(
-          '7 days',
-          style: TextStyle(
-            fontSize: 32,
+          label,
+          style: const TextStyle(color: Colors.white70, fontSize: 12),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF9B59B6),
           ),
         ),
-        SizedBox(height: 4),
         Text(
-          'Current Streak',
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.black54,
-          ),
+          unit,
+          style: const TextStyle(color: Colors.white70, fontSize: 10),
         ),
       ],
     );
   }
-}
 
-class _WeeklyProgress extends StatelessWidget {
-  const _WeeklyProgress();
-
-  @override
-  Widget build(BuildContext context) {
-    final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  Widget _buildWeeklyHistory() {
+    final days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.primaryLighter,
+        borderRadius: BorderRadius.circular(24),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: days.asMap().entries.map((entry) {
-          final index = entry.key;
-          final day = entry.value;
-          final isCompleted = true;
-          final isToday = index == 2;
+        children: List.generate(7, (index) {
+          final isCompleted = index < 5;
           return Column(
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: isCompleted ? const Color(0xFF4CAF50) : const Color(0xFFE8E8E8),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.check,
-                  color: isCompleted ? Colors.white : Colors.grey,
-                  size: 20,
+              Text(
+                days[index],
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textGrey,
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                day,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: isToday ? const Color(0xFF9B59B6) : Colors.black54,
-                  fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+              const SizedBox(height: 12),
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: isCompleted ? AppColors.primary : Colors.white,
+                  shape: BoxShape.circle,
                 ),
+                child: isCompleted
+                    ? const Icon(Icons.check_rounded, color: Colors.white, size: 18)
+                    : null,
               ),
             ],
           );
-        }).toList(),
+        }),
+      ),
+    );
+  }
+
+  Widget _buildBestStreaks() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.bgSky,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.emoji_events_rounded, color: AppColors.primary, size: 32),
+          const SizedBox(width: 20),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Best Streak!',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textDark,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Your longest meditation streak was 28 days back in July.',
+                  style: TextStyle(fontSize: 13, color: AppColors.textGrey),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
