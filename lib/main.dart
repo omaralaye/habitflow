@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'utils/constants.dart';
 import 'widgets/main_navigation.dart';
+import 'screens/onboarding_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,7 +16,7 @@ class MyApp extends StatelessWidget {
       title: 'Sanctuary',
       debugShowCheckedModeBanner: false,
       theme: AppStyles.theme,
-      home: const MainNavigation(),
+      home: const OnboardingScreen(),
     );
   }
 }

@@ -13,7 +13,6 @@ enum MascotType {
 class HabitModel {
   final String id;
   final String name;
-  final String? emoji;
   final Color color;
   final int streak;
   final List<int> completedDays;
@@ -26,7 +25,6 @@ class HabitModel {
   HabitModel({
     required this.id,
     required this.name,
-    this.emoji,
     required this.color,
     required this.streak,
     required this.completedDays,
@@ -40,7 +38,6 @@ class HabitModel {
   HabitModel copyWith({
     String? id,
     String? name,
-    String? emoji,
     Color? color,
     int? streak,
     List<int>? completedDays,
@@ -53,7 +50,6 @@ class HabitModel {
     return HabitModel(
       id: id ?? this.id,
       name: name ?? this.name,
-      emoji: emoji ?? this.emoji,
       color: color ?? this.color,
       streak: streak ?? this.streak,
       completedDays: completedDays ?? this.completedDays,

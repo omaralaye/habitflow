@@ -3,6 +3,7 @@ import '../utils/constants.dart';
 import '../services/mock_data_service.dart';
 import '../models/habit_model.dart';
 import 'habit_detail_screen.dart';
+import 'settings_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -15,7 +16,12 @@ class HomeScreen extends StatelessWidget {
         title: const Text('Sanctuary'),
         actions: [
           IconButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+              );
+            },
             icon: const Icon(Icons.settings_rounded, color: AppColors.primary),
           ),
           const SizedBox(width: 8),
@@ -56,7 +62,7 @@ class HomeScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.2),
+            color: AppColors.primary.withOpacity(0.2),
             blurRadius: 15,
             offset: const Offset(0, 10),
           ),
@@ -73,7 +79,7 @@ class HomeScreen extends StatelessWidget {
                 CircularProgressIndicator(
                   value: progress,
                   strokeWidth: 8,
-                  backgroundColor: Colors.white.withValues(alpha: 0.2),
+                  backgroundColor: Colors.white.withOpacity(0.2),
                   valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
                 ),
                 Text(
@@ -148,7 +154,7 @@ class HomeScreen extends StatelessWidget {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const HabitDetailScreen()),
+          MaterialPageRoute(builder: (_) => HabitDetailScreen(habit: habit)),
         );
       },
       child: Container(
@@ -158,7 +164,7 @@ class HomeScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
+              color: Colors.black.withOpacity(0.02),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
