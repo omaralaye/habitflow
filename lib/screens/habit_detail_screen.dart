@@ -4,7 +4,8 @@ import '../services/mock_data_service.dart';
 import '../models/habit_model.dart';
 
 class HabitDetailScreen extends StatefulWidget {
-  const HabitDetailScreen({super.key});
+  final HabitModel habit;
+  const HabitDetailScreen({super.key, required this.habit});
 
   @override
   State<HabitDetailScreen> createState() => _HabitDetailScreenState();
@@ -12,7 +13,6 @@ class HabitDetailScreen extends StatefulWidget {
 
 class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final HabitModel habit = MockDataService.habits[0];
 
   @override
   void initState() {
@@ -31,7 +31,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text(habit.name),
+        title: Text(widget.habit.name),
         actions: [
           IconButton(onPressed: () {}, icon: const Icon(Icons.edit_rounded, color: AppColors.primary)),
           const SizedBox(width: 8),
@@ -87,18 +87,18 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
           Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: MockDataService.getPastelColorForMascot(habit.mascot),
+              color: MockDataService.getPastelColorForMascot(widget.habit.mascot),
               borderRadius: BorderRadius.circular(32),
             ),
             child: Column(
               children: [
                 Text(
-                  MockDataService.mascotToEmoji(habit.mascot),
+                  MockDataService.mascotToEmoji(widget.habit.mascot),
                   style: const TextStyle(fontSize: 120),
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  '${habit.mascot.name.toUpperCase()} LVL ${habit.mascotLevel}',
+                  '${widget.habit.mascot.name.toUpperCase()} LVL ${widget.habit.mascotLevel}',
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -174,13 +174,13 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
         color: AppColors.primaryLighter,
         borderRadius: BorderRadius.circular(24),
       ),
-      child: const Row(
+      child: Row(
         children: [
-          Icon(Icons.auto_awesome_rounded, color: AppColors.primary),
-          SizedBox(width: 16),
+          const Icon(Icons.auto_awesome_rounded, color: AppColors.primary),
+          const SizedBox(width: 16),
           Expanded(
             child: Text(
-              'Your panda is feeling energized today because of your consistent meditation practice!',
+              'Your ${widget.habit.mascot.name.toLowerCase()} is feeling energized today because of your consistent ${widget.habit.name.toLowerCase()} practice!',
               style: TextStyle(
                 fontSize: 14,
                 color: AppColors.textDark,
@@ -228,7 +228,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildStreakStat('Current', '${habit.streak}', 'days'),
+          _buildStreakStat('Current', '${widget.habit.streak}', 'days'),
           Container(width: 1, height: 40, color: Colors.white24),
           _buildStreakStat('Best', '28', 'days'),
           Container(width: 1, height: 40, color: Colors.white24),
@@ -314,11 +314,11 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
         children: [
           const Icon(Icons.emoji_events_rounded, color: AppColors.primary, size: 32),
           const SizedBox(width: 20),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Best Streak!',
                   style: TextStyle(
                     fontSize: 16,
@@ -326,9 +326,9 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
                     color: AppColors.textDark,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
-                  'Your longest meditation streak was 28 days back in July.',
+                  'Your longest ${widget.habit.name.toLowerCase()} streak was 28 days back in July.',
                   style: TextStyle(fontSize: 13, color: AppColors.textGrey),
                 ),
               ],

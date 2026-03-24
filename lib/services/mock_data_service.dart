@@ -6,7 +6,6 @@ class MockDataService {
     HabitModel(
       id: '1',
       name: 'Meditation',
-      emoji: '🧘',
       color: const Color(0xFFE1F5FE),
       streak: 12,
       completedDays: [1, 2, 3, 4, 5],
@@ -19,7 +18,6 @@ class MockDataService {
     HabitModel(
       id: '2',
       name: 'Morning Run',
-      emoji: '🏃',
       color: const Color(0xFFFFF3E0),
       streak: 5,
       completedDays: [1, 3, 5],
@@ -32,7 +30,6 @@ class MockDataService {
     HabitModel(
       id: '3',
       name: 'Read 20 Pages',
-      emoji: '📚',
       color: const Color(0xFFF3E5F5),
       streak: 8,
       completedDays: [1, 2, 3, 4, 5, 6, 7, 8],
@@ -45,7 +42,6 @@ class MockDataService {
     HabitModel(
       id: '4',
       name: 'Stay Hydrated',
-      emoji: '💧',
       color: const Color(0xFFE0F2F1),
       streak: 15,
       completedDays: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
+import '../widgets/main_navigation.dart';
 
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
@@ -52,7 +53,10 @@ class OnboardingScreen extends StatelessWidget {
                 height: 60,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Navigate to home (or registration in a real app)
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (_) => const MainNavigation()),
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,

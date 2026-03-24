@@ -201,7 +201,7 @@ class SettingsScreen extends StatelessWidget {
       child: ElevatedButton(
         onPressed: () {},
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primaryLighter.withValues(alpha: 0.5),
+          backgroundColor: AppColors.primaryLighter.withOpacity(0.5),
           foregroundColor: AppColors.accentRed,
           elevation: 0,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
