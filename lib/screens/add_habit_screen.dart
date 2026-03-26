@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 import '../services/mock_data_service.dart';
 import '../models/habit_model.dart';
+import '../models/music_model.dart';
 
 class AddHabitScreen extends StatefulWidget {
   const AddHabitScreen({super.key});
@@ -14,6 +15,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
   final TextEditingController _nameController = TextEditingController();
   MascotType _selectedMascot = MascotType.panda;
   String _selectedCategory = 'General';
+  String? _selectedMusicId;
 
   final List<String> _categories = ['Mindfulness', 'Health', 'Learning', 'Productivity', 'General'];
 
@@ -29,7 +31,24 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              // Create the new habit with the selected music
+              final newHabit = HabitModel(
+                id: DateTime.now().millisecondsSinceEpoch.toString(),
+                name: _nameController.text.isEmpty ? 'New Habit' : _nameController.text,
+                color: MockDataService.getPastelColorForMascot(_selectedMascot),
+                streak: 0,
+                completedDays: [],
+                mascot: _selectedMascot,
+                category: _selectedCategory,
+                musicId: _selectedMusicId,
+              );
+
+              // In a real app, we would save this to a provider or database
+              // For now, we'll just add it to our mock list and pop
+              MockDataService.habits.add(newHabit);
+              Navigator.pop(context);
+            },
             child: const Text(
               'Create',
               style: TextStyle(
@@ -91,7 +110,19 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
             const SizedBox(height: 12),
             _buildCategorySelector(),
             const SizedBox(height: 32),
+            const Text(
+              'Smoothing Music',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textDark,
+              ),
+            ),
+            const SizedBox(height: 12),
+            _buildMusicSelector(),
+            const SizedBox(height: 32),
             _buildReminderSection(),
+            const SizedBox(height: 32),
           ],
         ),
       ),
@@ -139,7 +170,12 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
       children: _categories.map((cat) {
         final isSelected = cat == _selectedCategory;
         return GestureDetector(
-          onTap: () => setState(() => _selectedCategory = cat),
+          onTap: () {
+            setState(() {
+              _selectedCategory = cat;
+              _selectedMusicId = null; // Reset music when category changes
+            });
+          },
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
@@ -157,6 +193,77 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
           ),
         );
       }).toList(),
+    );
+  }
+
+  Widget _buildMusicSelector() {
+    final musicTracks = MockDataService.getMusicByCategory(_selectedCategory);
+
+    if (musicTracks.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.primaryLighter,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Text(
+          'No music tracks available for this category.',
+          style: TextStyle(color: AppColors.textGrey),
+        ),
+      );
+    }
+
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: musicTracks.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 8),
+      itemBuilder: (context, index) {
+        final track = musicTracks[index];
+        final isSelected = track.id == _selectedMusicId;
+        return GestureDetector(
+          onTap: () => setState(() => _selectedMusicId = track.id),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: isSelected ? AppColors.primary.withOpacity(0.1) : AppColors.primaryLighter,
+              borderRadius: BorderRadius.circular(16),
+              border: isSelected ? Border.all(color: AppColors.primary, width: 2) : null,
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  isSelected ? Icons.music_note_rounded : Icons.music_off_outlined,
+                  color: isSelected ? AppColors.primary : AppColors.textGrey,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        track.title,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: isSelected ? AppColors.primary : AppColors.textDark,
+                        ),
+                      ),
+                      Text(
+                        track.artist,
+                        style: const TextStyle(fontSize: 12, color: AppColors.textGrey),
+                      ),
+                    ],
+                  ),
+                ),
+                Text(
+                  track.duration,
+                  style: const TextStyle(fontSize: 12, color: AppColors.textGrey),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
