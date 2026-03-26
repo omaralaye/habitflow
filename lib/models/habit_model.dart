@@ -21,6 +21,7 @@ class HabitModel {
   final int progress; // percentage 0-100
   final String category;
   final bool isCompletedToday;
+  final String? musicId;
 
   HabitModel({
     required this.id,
@@ -33,6 +34,7 @@ class HabitModel {
     this.progress = 0,
     this.category = 'General',
     this.isCompletedToday = false,
+    this.musicId,
   });
 
   HabitModel copyWith({
@@ -46,6 +48,7 @@ class HabitModel {
     int? progress,
     String? category,
     bool? isCompletedToday,
+    String? musicId,
   }) {
     return HabitModel(
       id: id ?? this.id,
@@ -58,6 +61,7 @@ class HabitModel {
       progress: progress ?? this.progress,
       category: category ?? this.category,
       isCompletedToday: isCompletedToday ?? this.isCompletedToday,
+      musicId: musicId ?? this.musicId,
     );
   }
 }

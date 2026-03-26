@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/habit_model.dart';
+import '../models/music_model.dart';
 
 class MockDataService {
   static List<HabitModel> habits = [
@@ -75,5 +76,22 @@ class MockDataService {
       case MascotType.dog: return const Color(0xFFF1F8E9);
       case MascotType.bear: return const Color(0xFFEFEBE9);
     }
+  }
+
+  static List<MusicModel> musicTracks = [
+    MusicModel(id: '1', title: 'Rainy Afternoon', artist: 'Nature Sounds', category: 'Mindfulness', duration: '3:45'),
+    MusicModel(id: '2', title: 'Deep Zen', artist: 'Calm Masters', category: 'Mindfulness', duration: '5:12'),
+    MusicModel(id: '3', title: 'Mountain Breeze', artist: 'Earth Ambience', category: 'General', duration: '4:20'),
+    MusicModel(id: '4', title: 'Power Pulse', artist: 'Workout Beats', category: 'Health', duration: '3:15'),
+    MusicModel(id: '5', title: 'Steady Pace', artist: 'Rhythm Runners', category: 'Health', duration: '4:00'),
+    MusicModel(id: '6', title: 'Focus Flow', artist: 'Study Vibes', category: 'Learning', duration: '2:50'),
+    MusicModel(id: '7', title: 'Cosmic Library', artist: 'Space Ambient', category: 'Learning', duration: '6:30'),
+    MusicModel(id: '8', title: 'Morning Spark', artist: 'Joy Radiance', category: 'Productivity', duration: '3:30'),
+    MusicModel(id: '9', title: 'Forest Path', artist: 'Nature Sounds', category: 'Mindfulness', duration: '4:55'),
+    MusicModel(id: '10', title: 'Ocean Waves', artist: 'Sea Harmonics', category: 'General', duration: '5:40'),
+  ];
+
+  static List<MusicModel> getMusicByCategory(String category) {
+    return musicTracks.where((track) => track.category == category).toList();
   }
 }
