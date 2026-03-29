@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'utils/constants.dart';
-import 'widgets/main_navigation.dart';
 import 'screens/onboarding_screen.dart';
 
 void main() {

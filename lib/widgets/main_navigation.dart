@@ -1,3 +1,4 @@
+import 'package:animated_notch_bottom_bar/animated_notch_bottom_bar/animated_notch_bottom_bar.dart';
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 import '../screens/home_screen.dart';
@@ -13,7 +14,8 @@ class MainNavigation extends StatefulWidget {
 }
 
 class _MainNavigationState extends State<MainNavigation> {
-  int _currentIndex = 0;
+  final _pageController = PageController(initialPage: 0);
+  final _controller = NotchBottomBarController(index: 0);
 
   final List<Widget> _screens = [
     const HomeScreen(),
@@ -23,63 +25,82 @@ class _MainNavigationState extends State<MainNavigation> {
   ];
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: _screens[_currentIndex],
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 15,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildNavItem(0, Icons.calendar_today_rounded, 'Today'),
-                _buildNavItem(1, Icons.list_alt_rounded, 'Habits'),
-                _buildNavItem(2, Icons.bar_chart_rounded, 'Stats'),
-                _buildNavItem(3, Icons.person_outline_rounded, 'Profile'),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
-  Widget _buildNavItem(int index, IconData icon, String label) {
-    final isSelected = _currentIndex == index;
-    final color = isSelected ? AppColors.primary : AppColors.textGrey;
-
-    return GestureDetector(
-      onTap: () => setState(() => _currentIndex = index),
-      behavior: HitTestBehavior.opaque,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            color: color,
-            size: 26,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-              color: color,
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: PageView(
+        controller: _pageController,
+        physics: const NeverScrollableScrollPhysics(),
+        children: _screens,
+      ),
+      extendBody: true,
+      bottomNavigationBar: AnimatedNotchBottomBar(
+        notchBottomBarController: _controller,
+        color: Colors.white,
+        showLabel: true,
+        notchColor: AppColors.primary,
+        removeMargins: false,
+        kBottomRadius: 28.0,
+        kIconSize: 24.0,
+        shadowElevation: 5,
+        bottomBarItems: const [
+          BottomBarItem(
+            inActiveItem: Icon(
+              Icons.calendar_today_rounded,
+              color: AppColors.textGrey,
             ),
+            activeItem: Icon(
+              Icons.calendar_today_rounded,
+              color: Colors.white,
+            ),
+            itemLabel: 'Today',
+          ),
+          BottomBarItem(
+            inActiveItem: Icon(
+              Icons.list_alt_rounded,
+              color: AppColors.textGrey,
+            ),
+            activeItem: Icon(
+              Icons.list_alt_rounded,
+              color: Colors.white,
+            ),
+            itemLabel: 'Habits',
+          ),
+          BottomBarItem(
+            inActiveItem: Icon(
+              Icons.bar_chart_rounded,
+              color: AppColors.textGrey,
+            ),
+            activeItem: Icon(
+              Icons.bar_chart_rounded,
+              color: Colors.white,
+            ),
+            itemLabel: 'Stats',
+          ),
+          BottomBarItem(
+            inActiveItem: Icon(
+              Icons.person_outline_rounded,
+              color: AppColors.textGrey,
+            ),
+            activeItem: Icon(
+              Icons.person_outline_rounded,
+              color: Colors.white,
+            ),
+            itemLabel: 'Profile',
           ),
         ],
+        onTap: (index) {
+          _pageController.animateToPage(
+            index,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeIn,
+          );
+        },
       ),
     );
   }
