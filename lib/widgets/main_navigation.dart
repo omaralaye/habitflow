@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 import '../screens/home_screen.dart';
 import '../screens/habit_list_screen.dart';
+import '../screens/focus_hub_screen.dart';
 import '../screens/statistics_screen.dart';
 import '../screens/profile_screen.dart';
 
@@ -20,6 +21,7 @@ class _MainNavigationState extends State<MainNavigation> {
   final List<Widget> _screens = [
     const HomeScreen(),
     const HabitListScreen(),
+    const FocusHubScreen(),
     const StatisticsScreen(),
     const ProfileScreen(),
   ];
@@ -70,6 +72,17 @@ class _MainNavigationState extends State<MainNavigation> {
               color: Colors.white,
             ),
             itemLabel: 'Habits',
+          ),
+          BottomBarItem(
+            inActiveItem: Icon(
+              Icons.center_focus_strong_rounded,
+              color: AppColors.textGrey,
+            ),
+            activeItem: Icon(
+              Icons.center_focus_strong_rounded,
+              color: Colors.white,
+            ),
+            itemLabel: 'Focus',
           ),
           BottomBarItem(
             inActiveItem: Icon(

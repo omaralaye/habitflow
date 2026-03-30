@@ -4,6 +4,7 @@ import '../services/mock_data_service.dart';
 import '../models/habit_model.dart';
 import 'habit_detail_screen.dart';
 import 'settings_screen.dart';
+import 'focus_hub_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -33,6 +34,8 @@ class HomeScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildDailyProgress(),
+            const SizedBox(height: 24),
+            _buildFocusHubPrompt(context),
             const SizedBox(height: 32),
             const Text(
               'Habit Mascots',
@@ -44,6 +47,60 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             _buildHabitsGrid(context),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFocusHubPrompt(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const FocusHubScreen()),
+        );
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppColors.bgSky,
+          borderRadius: BorderRadius.circular(32),
+          border: Border.all(color: AppColors.primaryLight.withOpacity(0.3), width: 1),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.center_focus_strong_rounded, color: AppColors.primary, size: 28),
+            ),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Start Focus Hub',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Deep focus with your mascots and music.',
+                    style: TextStyle(fontSize: 12, color: AppColors.textGrey),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios_rounded, color: AppColors.primary, size: 16),
           ],
         ),
       ),
