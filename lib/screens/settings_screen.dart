@@ -40,6 +40,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Icons.notifications_active_rounded,
                 'Push Notifications',
                 'Daily nudges to keep your flow.',
+                onTap: () {
+                  setState(() {
+                    _pushNotifications = !_pushNotifications;
+                  });
+                },
                 trailing: Switch(
                   value: _pushNotifications,
                   onChanged: (v) {
@@ -54,6 +59,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Icons.nights_stay_rounded,
                 'Quiet Hours',
                 '10:00 PM — 07:00 AM',
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Quiet Hours settings coming soon')),
+                  );
+                },
                 trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textGrey),
               ),
             ]),
@@ -62,7 +72,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _buildSettingItem(
                 Icons.palette_rounded,
                 'Dark Mode',
-                'COMING SOON',
+                'Adjust colors for night.',
+                onTap: () {
+                  setState(() {
+                    _darkMode = !_darkMode;
+                  });
+                },
                 trailing: Switch(
                   value: _darkMode,
                   onChanged: (v) {
@@ -79,7 +94,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _buildSettingItem(
                 Icons.auto_graph_rounded,
                 'Weekly Digest',
-                '',
+                'Get your weekly progress report.',
+                onTap: () {
+                  setState(() {
+                    _weeklyDigest = !_weeklyDigest;
+                  });
+                },
                 trailing: Switch(
                   value: _weeklyDigest,
                   onChanged: (v) {
@@ -97,22 +117,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Icons.email_rounded,
                 'EMAIL ADDRESS',
                 'alex.flow@example.com',
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Email change coming soon')),
+                  );
+                },
                 trailing: const Icon(Icons.edit_rounded, size: 18, color: AppColors.textGrey),
               ),
               _buildSettingItem(
                 Icons.security_rounded,
                 'SECURITY',
                 'Two-Factor Auth',
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Security settings coming soon')),
+                  );
+                },
                 trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textGrey),
               ),
             ]),
             const SizedBox(height: 48),
             _buildSignOutButton(context),
             const SizedBox(height: 48),
-            const Center(
+            Center(
               child: Column(
                 children: [
-                  Text(
+                  const Text(
                     'HABIT FLOW V2.4.0',
                     style: TextStyle(
                       fontSize: 10,
@@ -121,13 +151,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       letterSpacing: 2,
                     ),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text('Privacy Policy', style: TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w600)),
-                      SizedBox(width: 24),
-                      Text('Terms of Service', style: TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w600)),
+                      _buildFooterLink(context, 'Privacy Policy'),
+                      const SizedBox(width: 24),
+                      _buildFooterLink(context, 'Terms of Service'),
                     ],
                   ),
                 ],
@@ -183,47 +213,79 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildSettingItem(IconData icon, String title, String subtitle, {required Widget trailing}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 20),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.primaryLighter,
-              borderRadius: BorderRadius.circular(12),
+  Widget _buildSettingItem(
+    IconData icon,
+    String title,
+    String subtitle, {
+    required Widget trailing,
+    VoidCallback? onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.primaryLighter,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: AppColors.primary, size: 22),
             ),
-            child: Icon(icon, color: AppColors.primary, size: 22),
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textDark,
-                  ),
-                ),
-                if (subtitle.isNotEmpty) ...[
-                  const SizedBox(height: 4),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    subtitle,
+                    title,
                     style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textGrey,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textDark,
                     ),
                   ),
+                  if (subtitle.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textGrey,
+                      ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
+            trailing,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFooterLink(BuildContext context, String text) {
+    return InkWell(
+      onTap: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$text coming soon')),
+        );
+      },
+      borderRadius: BorderRadius.circular(4),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        child: Text(
+          text,
+          style: const TextStyle(
+            fontSize: 12,
+            color: AppColors.primary,
+            fontWeight: FontWeight.w600,
           ),
-          trailing,
-        ],
+        ),
       ),
     );
   }
