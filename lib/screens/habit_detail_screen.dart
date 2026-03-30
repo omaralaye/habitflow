@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 import '../services/mock_data_service.dart';
 import '../models/habit_model.dart';
+import 'add_habit_screen.dart';
 
 class HabitDetailScreen extends StatefulWidget {
   final HabitModel habit;
@@ -33,7 +34,18 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
       appBar: AppBar(
         title: Text(widget.habit.name),
         actions: [
-          IconButton(onPressed: () {}, icon: const Icon(Icons.edit_rounded, color: AppColors.primary)),
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => AddHabitScreen(habit: widget.habit)),
+              ).then((_) {
+                // Refresh state if habit was updated
+                setState(() {});
+              });
+            },
+            icon: const Icon(Icons.edit_rounded, color: AppColors.primary),
+          ),
           const SizedBox(width: 8),
         ],
       ),

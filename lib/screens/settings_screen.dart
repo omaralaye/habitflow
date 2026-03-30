@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
+import 'onboarding_screen.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  bool _pushNotifications = true;
+  bool _darkMode = false;
+  bool _weeklyDigest = true;
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +40,15 @@ class SettingsScreen extends StatelessWidget {
                 Icons.notifications_active_rounded,
                 'Push Notifications',
                 'Daily nudges to keep your flow.',
-                trailing: Switch(value: true, onChanged: (v) {}, activeColor: AppColors.primary),
+                trailing: Switch(
+                  value: _pushNotifications,
+                  onChanged: (v) {
+                    setState(() {
+                      _pushNotifications = v;
+                    });
+                  },
+                  activeThumbColor: AppColors.primary,
+                ),
               ),
               _buildSettingItem(
                 Icons.nights_stay_rounded,
@@ -45,7 +63,15 @@ class SettingsScreen extends StatelessWidget {
                 Icons.palette_rounded,
                 'Dark Mode',
                 'COMING SOON',
-                trailing: Switch(value: false, onChanged: (v) {}, activeColor: AppColors.primary),
+                trailing: Switch(
+                  value: _darkMode,
+                  onChanged: (v) {
+                    setState(() {
+                      _darkMode = v;
+                    });
+                  },
+                  activeThumbColor: AppColors.primary,
+                ),
               ),
             ]),
             const SizedBox(height: 24),
@@ -54,7 +80,15 @@ class SettingsScreen extends StatelessWidget {
                 Icons.auto_graph_rounded,
                 'Weekly Digest',
                 '',
-                trailing: Switch(value: true, onChanged: (v) {}, activeColor: AppColors.primary),
+                trailing: Switch(
+                  value: _weeklyDigest,
+                  onChanged: (v) {
+                    setState(() {
+                      _weeklyDigest = v;
+                    });
+                  },
+                  activeThumbColor: AppColors.primary,
+                ),
               ),
             ]),
             const SizedBox(height: 24),
@@ -73,7 +107,7 @@ class SettingsScreen extends StatelessWidget {
               ),
             ]),
             const SizedBox(height: 48),
-            _buildSignOutButton(),
+            _buildSignOutButton(context),
             const SizedBox(height: 48),
             const Center(
               child: Column(
@@ -194,12 +228,18 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSignOutButton() {
+  Widget _buildSignOutButton(BuildContext context) {
     return SizedBox(
       width: double.infinity,
       height: 60,
       child: ElevatedButton(
-        onPressed: () {},
+        onPressed: () {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+            (route) => false,
+          );
+        },
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primaryLighter.withOpacity(0.5),
           foregroundColor: AppColors.accentRed,

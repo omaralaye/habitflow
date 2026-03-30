@@ -12,7 +12,14 @@ class StatisticsScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Statistics'),
         actions: [
-          IconButton(onPressed: () {}, icon: const Icon(Icons.share_rounded, color: AppColors.primary)),
+          IconButton(
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Sharing your progress...')),
+              );
+            },
+            icon: const Icon(Icons.share_rounded, color: AppColors.primary),
+          ),
           const SizedBox(width: 8),
         ],
       ),
