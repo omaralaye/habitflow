@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 import '../services/mock_data_service.dart';
 import '../models/habit_model.dart';
-import '../models/music_model.dart';
 
 class AddHabitScreen extends StatefulWidget {
-  const AddHabitScreen({super.key});
+  final HabitModel? habit;
+  const AddHabitScreen({super.key, this.habit});
 
   @override
   State<AddHabitScreen> createState() => _AddHabitScreenState();
@@ -16,15 +16,35 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
   MascotType _selectedMascot = MascotType.panda;
   String _selectedCategory = 'General';
   String? _selectedMusicId;
+  bool _isReminderEnabled = true;
 
   final List<String> _categories = ['Mindfulness', 'Health', 'Learning', 'Productivity', 'General'];
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.habit != null) {
+      _nameController.text = widget.habit!.name;
+      _selectedMascot = widget.habit!.mascot;
+      _selectedCategory = widget.habit!.category;
+      _selectedMusicId = widget.habit!.musicId;
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final bool isEditing = widget.habit != null;
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Add Habit'),
+        title: Text(isEditing ? 'Edit Habit' : 'Add Habit'),
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.close_rounded, color: AppColors.textDark),
@@ -32,26 +52,40 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
         actions: [
           TextButton(
             onPressed: () {
-              // Create the new habit with the selected music
-              final newHabit = HabitModel(
-                id: DateTime.now().millisecondsSinceEpoch.toString(),
-                name: _nameController.text.isEmpty ? 'New Habit' : _nameController.text,
-                color: MockDataService.getPastelColorForMascot(_selectedMascot),
-                streak: 0,
-                completedDays: [],
-                mascot: _selectedMascot,
-                category: _selectedCategory,
-                musicId: _selectedMusicId,
-              );
+              if (isEditing) {
+                // Update the existing habit
+                final updatedHabit = widget.habit!.copyWith(
+                  name: _nameController.text.isEmpty ? 'New Habit' : _nameController.text,
+                  color: MockDataService.getPastelColorForMascot(_selectedMascot),
+                  mascot: _selectedMascot,
+                  category: _selectedCategory,
+                  musicId: _selectedMusicId,
+                );
 
-              // In a real app, we would save this to a provider or database
-              // For now, we'll just add it to our mock list and pop
-              MockDataService.habits.add(newHabit);
+                final index = MockDataService.habits.indexWhere((h) => h.id == widget.habit!.id);
+                if (index != -1) {
+                  MockDataService.habits[index] = updatedHabit;
+                }
+              } else {
+                // Create the new habit
+                final newHabit = HabitModel(
+                  id: DateTime.now().millisecondsSinceEpoch.toString(),
+                  name: _nameController.text.isEmpty ? 'New Habit' : _nameController.text,
+                  color: MockDataService.getPastelColorForMascot(_selectedMascot),
+                  streak: 0,
+                  completedDays: [],
+                  mascot: _selectedMascot,
+                  category: _selectedCategory,
+                  musicId: _selectedMusicId,
+                );
+                MockDataService.habits.add(newHabit);
+              }
+
               Navigator.pop(context);
             },
-            child: const Text(
-              'Create',
-              style: TextStyle(
+            child: Text(
+              isEditing ? 'Save' : 'Create',
+              style: const TextStyle(
                 color: AppColors.primary,
                 fontWeight: FontWeight.bold,
               ),
@@ -299,9 +333,13 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
             ),
           ),
           Switch(
-            value: true,
-            onChanged: (val) {},
-            activeColor: AppColors.primary,
+            value: _isReminderEnabled,
+            onChanged: (val) {
+              setState(() {
+                _isReminderEnabled = val;
+              });
+            },
+            activeThumbColor: AppColors.primary,
           ),
         ],
       ),

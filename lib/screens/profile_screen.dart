@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
-import '../services/mock_data_service.dart';
 import 'settings_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -31,9 +30,9 @@ class ProfileScreen extends StatelessWidget {
           children: [
             _buildProfileCard(),
             const SizedBox(height: 24),
-            _buildMilestones(),
+            _buildMilestones(context),
             const SizedBox(height: 24),
-            _buildGlobalRank(),
+            _buildGlobalRank(context),
           ],
         ),
       ),
@@ -144,14 +143,14 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMilestones() {
+  Widget _buildMilestones(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Row(
+        Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
+            const Text(
               'Milestones',
               style: TextStyle(
                 fontSize: 20,
@@ -159,12 +158,19 @@ class ProfileScreen extends StatelessWidget {
                 color: AppColors.textDark,
               ),
             ),
-            Text(
-              'View All',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppColors.primary,
+            GestureDetector(
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Opening milestones...')),
+                );
+              },
+              child: const Text(
+                'View All',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
               ),
             ),
           ],
@@ -209,9 +215,15 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildGlobalRank() {
-    return Container(
-      padding: const EdgeInsets.all(24),
+  Widget _buildGlobalRank(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Viewing leaderboard...')),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
@@ -274,6 +286,6 @@ class ProfileScreen extends StatelessWidget {
           const Icon(Icons.chevron_right_rounded, color: AppColors.textGrey),
         ],
       ),
-    );
+    ),);
   }
 }

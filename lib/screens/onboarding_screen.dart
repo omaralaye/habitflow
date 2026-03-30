@@ -177,7 +177,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     children: [
                       const Text('Already have an account? '),
                       GestureDetector(
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (_) => const MainNavigation()),
+                          );
+                        },
                         child: const Text(
                           'Log In',
                           style: TextStyle(

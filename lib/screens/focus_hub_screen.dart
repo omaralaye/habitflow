@@ -44,6 +44,44 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
     });
   }
 
+  void _nextTrack() {
+    if (_selectedMusic == null) return;
+    final currentIndex = MockDataService.musicTracks.indexWhere((m) => m.id == _selectedMusic!.id);
+    final nextIndex = (currentIndex + 1) % MockDataService.musicTracks.length;
+    setState(() {
+      _selectedMusic = MockDataService.musicTracks[nextIndex];
+    });
+  }
+
+  void _previousTrack() {
+    if (_selectedMusic == null) return;
+    final currentIndex = MockDataService.musicTracks.indexWhere((m) => m.id == _selectedMusic!.id);
+    final prevIndex = (currentIndex - 1 + MockDataService.musicTracks.length) % MockDataService.musicTracks.length;
+    setState(() {
+      _selectedMusic = MockDataService.musicTracks[prevIndex];
+    });
+  }
+
+  void _showInfoDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('About Focus Hub'),
+        content: const Text(
+          'The Focus Hub is your dedicated space for deep work. '
+          'Choose a habit mascot to accompany you and pick some soothing ambient music '
+          'to help you stay in the flow.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Got it'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -52,7 +90,7 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
         title: const Text('Focus Hub'),
         actions: [
           IconButton(
-            onPressed: () {},
+            onPressed: _showInfoDialog,
             icon: const Icon(Icons.info_outline_rounded, color: AppColors.primary),
           ),
           const SizedBox(width: 8),
@@ -286,11 +324,11 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
             ),
           ),
           IconButton(
-            onPressed: () {},
+            onPressed: _previousTrack,
             icon: const Icon(Icons.skip_previous_rounded, color: AppColors.textGrey),
           ),
           IconButton(
-            onPressed: () {},
+            onPressed: _toggleFocus,
             icon: Icon(
               _isFocusing ? Icons.pause_circle_filled_rounded : Icons.play_circle_fill_rounded,
               color: AppColors.primary,
@@ -298,7 +336,7 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
             ),
           ),
           IconButton(
-            onPressed: () {},
+            onPressed: _nextTrack,
             icon: const Icon(Icons.skip_next_rounded, color: AppColors.textGrey),
           ),
         ],
