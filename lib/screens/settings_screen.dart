@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 import 'onboarding_screen.dart';
+import 'settings/quiet_hours_screen.dart';
+import 'settings/email_settings_screen.dart';
+import 'settings/security_settings_screen.dart';
+import 'settings/privacy_policy_screen.dart';
+import 'settings/terms_of_service_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -60,8 +65,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 'Quiet Hours',
                 '10:00 PM — 07:00 AM',
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Quiet Hours settings coming soon')),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const QuietHoursScreen()),
                   );
                 },
                 trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textGrey),
@@ -118,8 +124,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 'EMAIL ADDRESS',
                 'alex.flow@example.com',
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Email change coming soon')),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const EmailSettingsScreen()),
                   );
                 },
                 trailing: const Icon(Icons.edit_rounded, size: 18, color: AppColors.textGrey),
@@ -129,8 +136,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 'SECURITY',
                 'Two-Factor Auth',
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Security settings coming soon')),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SecuritySettingsScreen()),
                   );
                 },
                 trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textGrey),
@@ -271,9 +279,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _buildFooterLink(BuildContext context, String text) {
     return InkWell(
       onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$text coming soon')),
-        );
+        if (text == 'Privacy Policy') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen()),
+          );
+        } else if (text == 'Terms of Service') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const TermsOfServiceScreen()),
+          );
+        }
       },
       borderRadius: BorderRadius.circular(4),
       child: Padding(
