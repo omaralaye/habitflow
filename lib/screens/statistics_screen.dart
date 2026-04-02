@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
+import '../services/theme_service.dart';
 import '../services/mock_data_service.dart';
 
 class StatisticsScreen extends StatelessWidget {
@@ -7,8 +8,11 @@ class StatisticsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
+
     return Scaffold(
-      backgroundColor: AppColors.primaryLighter,
+      backgroundColor: isDark ? theme.scaffoldBackgroundColor : AppColors.primaryLighter,
       appBar: AppBar(
         title: const Text('Statistics'),
         actions: [
@@ -27,32 +31,35 @@ class StatisticsScreen extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            _buildOverview(),
+            _buildOverview(context),
             const SizedBox(height: 24),
-            _buildWeeklyStats(),
+            _buildWeeklyStats(context),
             const SizedBox(height: 24),
-            _buildHabitBreakdown(),
+            _buildHabitBreakdown(context),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildOverview() {
+  Widget _buildOverview(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardTheme.color,
         borderRadius: BorderRadius.circular(32),
       ),
       child: Column(
         children: [
-          const Text(
+          Text(
             'Overall Progress',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: AppColors.textGrey,
+              color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey,
             ),
           ),
           const SizedBox(height: 24),
@@ -65,26 +72,26 @@ class StatisticsScreen extends StatelessWidget {
                 child: CircularProgressIndicator(
                   value: 0.85,
                   strokeWidth: 16,
-                  backgroundColor: AppColors.primaryLighter,
+                  backgroundColor: isDark ? AppColors.darkSurface : AppColors.primaryLighter,
                   valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
                   strokeCap: StrokeCap.round,
                 ),
               ),
-              const Column(
+              Column(
                 children: [
                   Text(
                     '85%',
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textDark,
+                      color: theme.colorScheme.onSurface,
                     ),
                   ),
                   Text(
                     'Success Rate',
                     style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.textGrey,
+                      color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey,
                     ),
                   ),
                 ],
@@ -95,11 +102,11 @@ class StatisticsScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildSimpleStat('124', 'Total Done'),
-              Container(width: 1, height: 30, color: AppColors.primaryLighter),
-              _buildSimpleStat('12', 'Active Habits'),
-              Container(width: 1, height: 30, color: AppColors.primaryLighter),
-              _buildSimpleStat('8', 'Perfect Days'),
+              _buildSimpleStat(context, '124', 'Total Done'),
+              Container(width: 1, height: 30, color: isDark ? AppColors.darkSurface : AppColors.primaryLighter),
+              _buildSimpleStat(context, '12', 'Active Habits'),
+              Container(width: 1, height: 30, color: isDark ? AppColors.darkSurface : AppColors.primaryLighter),
+              _buildSimpleStat(context, '8', 'Perfect Days'),
             ],
           ),
         ],
@@ -107,48 +114,52 @@ class StatisticsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSimpleStat(String value, String label) {
+  Widget _buildSimpleStat(BuildContext context, String value, String label) {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
     return Column(
       children: [
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: AppColors.textDark,
+            color: theme.colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11,
-            color: AppColors.textGrey,
+            color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildWeeklyStats() {
+  Widget _buildWeeklyStats(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
     final values = [5, 4, 6, 4, 5, 3, 4];
     final days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardTheme.color,
         borderRadius: BorderRadius.circular(32),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Weekly Breakdown',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppColors.textDark,
+              color: theme.colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 24),
@@ -171,10 +182,10 @@ class StatisticsScreen extends StatelessWidget {
                   const SizedBox(height: 12),
                   Text(
                     days[index],
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textGrey,
+                      color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey,
                     ),
                   ),
                 ],
@@ -186,22 +197,24 @@ class StatisticsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHabitBreakdown() {
+  Widget _buildHabitBreakdown(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardTheme.color,
         borderRadius: BorderRadius.circular(32),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Habit Performance',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppColors.textDark,
+              color: theme.colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 24),
@@ -214,7 +227,7 @@ class StatisticsScreen extends StatelessWidget {
                   children: [
                     Text(
                       habit.name,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
                     ),
                     Text(
                       '${habit.progress}%',
@@ -228,13 +241,13 @@ class StatisticsScreen extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: habit.progress / 100,
                     minHeight: 10,
-                    backgroundColor: AppColors.primaryLighter,
+                    backgroundColor: isDark ? AppColors.darkSurface : AppColors.primaryLighter,
                     valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
                   ),
                 ),
               ],
             ),
-          )).toList(),
+          )),
         ],
       ),
     );

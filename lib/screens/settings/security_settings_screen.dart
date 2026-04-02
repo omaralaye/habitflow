@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../utils/constants.dart';
+import '../../services/theme_service.dart';
 
 class SecuritySettingsScreen extends StatefulWidget {
   const SecuritySettingsScreen({super.key});
@@ -14,8 +15,11 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
+
     return Scaffold(
-      backgroundColor: AppColors.primaryLighter,
+      backgroundColor: isDark ? theme.scaffoldBackgroundColor : AppColors.primaryLighter,
       appBar: AppBar(
         title: const Text('Security'),
       ),
@@ -24,15 +28,15 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Manage your account security and authentication methods.',
-              style: TextStyle(fontSize: 14, color: AppColors.textGrey),
+              style: TextStyle(fontSize: 14, color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
             ),
             const SizedBox(height: 32),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: theme.cardTheme.color,
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Column(
@@ -44,7 +48,7 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
                     _twoFactorAuth,
                     (v) => setState(() => _twoFactorAuth = v),
                   ),
-                  const Divider(height: 1, color: AppColors.primaryLighter),
+                  Divider(height: 1, color: isDark ? AppColors.darkSurface : AppColors.primaryLighter),
                   _buildSecurityToggle(
                     Icons.face_retouching_natural,
                     'Face ID / Biometrics',
@@ -52,7 +56,7 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
                     _faceId,
                     (v) => setState(() => _faceId = v),
                   ),
-                  const Divider(height: 1, color: AppColors.primaryLighter),
+                  Divider(height: 1, color: isDark ? AppColors.darkSurface : AppColors.primaryLighter),
                   _buildSecurityAction(
                     Icons.lock_reset_rounded,
                     'Change Password',
@@ -75,6 +79,9 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
     bool value,
     ValueChanged<bool> onChanged,
   ) {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
       child: Row(
@@ -82,7 +89,7 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.primaryLighter,
+              color: isDark ? AppColors.darkSurface : AppColors.primaryLighter,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: AppColors.primary, size: 22),
@@ -94,15 +101,15 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textDark,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
                 Text(
                   subtitle,
-                  style: const TextStyle(fontSize: 12, color: AppColors.textGrey),
+                  style: TextStyle(fontSize: 12, color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
                 ),
               ],
             ),
@@ -123,6 +130,9 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
     String subtitle, {
     VoidCallback? onTap,
   }) {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
@@ -133,7 +143,7 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppColors.primaryLighter,
+                color: isDark ? AppColors.darkSurface : AppColors.primaryLighter,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: AppColors.primary, size: 22),
@@ -145,15 +155,15 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textDark,
+                      color: theme.colorScheme.onSurface,
                     ),
                   ),
                   Text(
                     subtitle,
-                    style: const TextStyle(fontSize: 12, color: AppColors.textGrey),
+                    style: TextStyle(fontSize: 12, color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
                   ),
                 ],
               ),

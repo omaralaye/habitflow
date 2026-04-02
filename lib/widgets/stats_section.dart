@@ -8,8 +8,9 @@ class StatsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.all(16),
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -18,15 +19,15 @@ class StatsSection extends StatelessWidget {
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              color: theme.colorScheme.onSurface,
             ),
           ),
-          SizedBox(height: 12),
-          FilterTabs(),
-          SizedBox(height: 24),
-          ProgressCard(),
-          SizedBox(height: 16),
-          WeeklyProgress(),
+          const SizedBox(height: 12),
+          const FilterTabs(),
+          const SizedBox(height: 24),
+          const ProgressCard(),
+          const SizedBox(height: 16),
+          const WeeklyProgress(),
         ],
       ),
     );

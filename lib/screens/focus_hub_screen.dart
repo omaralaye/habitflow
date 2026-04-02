@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
+import '../services/theme_service.dart';
 import '../services/mock_data_service.dart';
 import '../models/habit_model.dart';
 import '../models/music_model.dart';
@@ -84,8 +85,11 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
+
     return Scaffold(
-      backgroundColor: AppColors.primaryLighter,
+      backgroundColor: isDark ? theme.scaffoldBackgroundColor : AppColors.primaryLighter,
       appBar: AppBar(
         title: const Text('Focus Hub'),
         actions: [
@@ -103,23 +107,23 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
           children: [
             _buildFocusCard(),
             const SizedBox(height: 32),
-            const Text(
+            Text(
               'Habit Selection',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textDark,
+                color: theme.colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 16),
             _buildHabitSelector(),
             const SizedBox(height: 32),
-            const Text(
+            Text(
               'Ambient Sanctuary',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textDark,
+                color: theme.colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 16),
@@ -133,11 +137,14 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
   }
 
   Widget _buildFocusCard() {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardTheme.color,
         borderRadius: BorderRadius.circular(40),
         boxShadow: [
           BoxShadow(
@@ -158,7 +165,7 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
                 child: CircularProgressIndicator(
                   value: _focusProgress,
                   strokeWidth: 12,
-                  backgroundColor: AppColors.primaryLighter,
+                  backgroundColor: isDark ? AppColors.darkSurface : AppColors.primaryLighter,
                   valueColor: AlwaysStoppedAnimation<Color>(
                     _isFocusing ? AppColors.primary : AppColors.primaryLight,
                   ),
@@ -191,19 +198,19 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
           const SizedBox(height: 32),
           Text(
             _selectedHabit?.name ?? 'Select a Habit',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: AppColors.textDark,
+              color: theme.colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             _isFocusing ? 'Keep it up, you\'re doing great!' : 'Ready to start your session?',
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: AppColors.textGrey,
+              color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey,
             ),
           ),
           const SizedBox(height: 32),
@@ -232,6 +239,9 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
   }
 
   Widget _buildHabitSelector() {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
+
     return SizedBox(
       height: 100,
       child: ListView.builder(
@@ -256,7 +266,7 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
               width: 80,
               margin: const EdgeInsets.only(right: 16),
               decoration: BoxDecoration(
-                color: isSelected ? AppColors.primary : Colors.white,
+                color: isSelected ? AppColors.primary : theme.cardTheme.color,
                 borderRadius: BorderRadius.circular(24),
                 border: isSelected ? Border.all(color: AppColors.primary, width: 2) : null,
               ),
@@ -273,7 +283,7 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
-                      color: isSelected ? Colors.white : AppColors.textDark,
+                      color: isSelected ? Colors.white : theme.colorScheme.onSurface,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -288,10 +298,13 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
   }
 
   Widget _buildMusicPlayer() {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardTheme.color,
         borderRadius: BorderRadius.circular(32),
       ),
       child: Row(
@@ -299,7 +312,7 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.bgSky,
+              color: isDark ? AppColors.darkSurface : AppColors.bgSky,
               borderRadius: BorderRadius.circular(16),
             ),
             child: const Icon(Icons.music_note_rounded, color: AppColors.primary),
@@ -311,14 +324,14 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
               children: [
                 Text(
                   _selectedMusic?.title ?? 'No Music Selected',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textDark,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
                 Text(
                   _selectedMusic?.artist ?? 'Select a track',
-                  style: const TextStyle(fontSize: 12, color: AppColors.textGrey),
+                  style: TextStyle(fontSize: 12, color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
                 ),
               ],
             ),
@@ -369,10 +382,13 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
   }
 
   Widget _buildStatCard(String label, String value, IconData icon, Color iconColor) {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardTheme.color,
         borderRadius: BorderRadius.circular(28),
       ),
       child: Column(
@@ -382,18 +398,18 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
           const SizedBox(height: 12),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppColors.textDark,
+              color: theme.colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: AppColors.textGrey,
+              color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey,
             ),
           ),
         ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'utils/constants.dart';
 import 'screens/onboarding_screen.dart';
+import 'services/theme_service.dart';
 
 void main() {
   runApp(const MyApp());
@@ -11,11 +12,18 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Sanctuary',
-      debugShowCheckedModeBanner: false,
-      theme: AppStyles.theme,
-      home: const OnboardingScreen(),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: ThemeService().themeModeNotifier,
+      builder: (context, currentThemeMode, child) {
+        return MaterialApp(
+          title: 'Sanctuary',
+          debugShowCheckedModeBanner: false,
+          theme: AppStyles.lightTheme,
+          darkTheme: AppStyles.darkTheme,
+          themeMode: currentThemeMode,
+          home: const OnboardingScreen(),
+        );
+      },
     );
   }
 }

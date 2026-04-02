@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import '../services/theme_service.dart';
+import '../utils/constants.dart';
 
 class ProfileSection extends StatelessWidget {
   const ProfileSection({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: theme.cardTheme.color,
       ),
       child: Column(
         children: [
@@ -31,23 +34,23 @@ class ProfileSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Meditation',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              color: theme.colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 8),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 32),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Text(
               'Take 10 minutes to practice mindfulness and meditation',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.black54,
+                color: ThemeService().isDarkMode ? AppColors.darkTextSecondary : Colors.black54,
               ),
             ),
           ),
