@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import '../services/theme_service.dart';
+import '../utils/constants.dart';
 
 class ProgressCard extends StatelessWidget {
   const ProgressCard({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardTheme.color,
         borderRadius: BorderRadius.circular(16),
       ),
       child: const Row(
@@ -30,6 +33,8 @@ class _CircularProgressIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
     return Column(
       children: [
         SizedBox(
@@ -44,7 +49,7 @@ class _CircularProgressIndicator extends StatelessWidget {
                 child: CircularProgressIndicator(
                   value: 1.0,
                   strokeWidth: 10,
-                  backgroundColor: const Color(0xFFE8E8E8),
+                  backgroundColor: isDark ? AppColors.darkSurface : const Color(0xFFE8E8E8),
                   valueColor: const AlwaysStoppedAnimation<Color>(
                     Color(0xFF9B59B6),
                   ),
@@ -53,12 +58,12 @@ class _CircularProgressIndicator extends StatelessWidget {
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
+                  Text(
                     '7/7',
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: theme.colorScheme.onSurface,
                     ),
                   ),
                   Container(
@@ -94,6 +99,8 @@ class _StreakCounter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -106,11 +113,11 @@ class _StreakCounter extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-        const Text(
+        Text(
           'Current Streak',
           style: TextStyle(
             fontSize: 14,
-            color: Colors.black54,
+            color: isDark ? AppColors.darkTextSecondary : Colors.black54,
           ),
         ),
       ],

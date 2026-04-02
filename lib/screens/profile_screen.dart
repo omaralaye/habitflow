@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
+import '../services/theme_service.dart';
 import 'settings_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -7,8 +8,11 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
+
     return Scaffold(
-      backgroundColor: AppColors.primaryLighter,
+      backgroundColor: isDark ? theme.scaffoldBackgroundColor : AppColors.primaryLighter,
       appBar: AppBar(
         title: const Text('Profile'),
         actions: [
@@ -28,7 +32,7 @@ class ProfileScreen extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            _buildProfileCard(),
+            _buildProfileCard(context),
             const SizedBox(height: 24),
             _buildMilestones(context),
             const SizedBox(height: 24),
@@ -39,11 +43,14 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildProfileCard() {
+  Widget _buildProfileCard(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
+
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardTheme.color,
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
@@ -59,7 +66,7 @@ class ProfileScreen extends StatelessWidget {
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: AppColors.bgLavender,
+              color: isDark ? AppColors.darkSurface : AppColors.bgLavender,
               shape: BoxShape.circle,
               border: Border.all(color: AppColors.primaryLight, width: 4),
             ),
@@ -71,12 +78,12 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
+          Text(
             'Alex Rivers',
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
-              color: AppColors.textDark,
+              color: theme.colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 8),
@@ -89,17 +96,20 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 32),
-          _buildXPProgress(),
+          _buildXPProgress(context),
         ],
       ),
     );
   }
 
-  Widget _buildXPProgress() {
+  Widget _buildXPProgress(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Row(
+        Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
@@ -107,7 +117,7 @@ class ProfileScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textGrey,
+                color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey,
                 letterSpacing: 1.2,
               ),
             ),
@@ -116,7 +126,7 @@ class ProfileScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textDark,
+                color: theme.colorScheme.onSurface,
               ),
             ),
           ],
@@ -127,16 +137,16 @@ class ProfileScreen extends StatelessWidget {
           child: LinearProgressIndicator(
             value: 0.75,
             minHeight: 12,
-            backgroundColor: AppColors.primaryLighter,
+            backgroundColor: isDark ? AppColors.darkSurface : AppColors.primaryLighter,
             valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
           ),
         ),
         const SizedBox(height: 12),
-        const Text(
+        Text(
           '250 XP until Level 25',
           style: TextStyle(
             fontSize: 12,
-            color: AppColors.textGrey,
+            color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey,
           ),
         ),
       ],
@@ -144,18 +154,19 @@ class ProfileScreen extends StatelessWidget {
   }
 
   Widget _buildMilestones(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               'Milestones',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textDark,
+                color: theme.colorScheme.onSurface,
               ),
             ),
             GestureDetector(
@@ -179,23 +190,25 @@ class ProfileScreen extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildMilestoneIcon('Early Bird', '🌱', AppColors.bgMint),
-            _buildMilestoneIcon('Focus King', '⚡', AppColors.bgSky),
-            _buildMilestoneIcon('Mastery', '🏆', AppColors.bgLavender),
+            _buildMilestoneIcon(context, 'Early Bird', '🌱', AppColors.bgMint),
+            _buildMilestoneIcon(context, 'Focus King', '⚡', AppColors.bgSky),
+            _buildMilestoneIcon(context, 'Mastery', '🏆', AppColors.bgLavender),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildMilestoneIcon(String label, String emoji, Color color) {
+  Widget _buildMilestoneIcon(BuildContext context, String label, String emoji, Color color) {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
     return Column(
       children: [
         Container(
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            color: color,
+            color: isDark ? AppColors.darkSurface : color,
             shape: BoxShape.circle,
           ),
           child: Center(
@@ -205,10 +218,10 @@ class ProfileScreen extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.bold,
-            color: AppColors.textDark,
+            color: theme.colorScheme.onSurface,
           ),
         ),
       ],
@@ -216,6 +229,8 @@ class ProfileScreen extends StatelessWidget {
   }
 
   Widget _buildGlobalRank(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
     return GestureDetector(
       onTap: () {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -225,7 +240,7 @@ class ProfileScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardTheme.color,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -250,22 +265,22 @@ class ProfileScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Global Rank',
                   style: TextStyle(
                     fontSize: 14,
-                    color: AppColors.textGrey,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Text(
+                    Text(
                       '#412',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textDark,
+                        color: theme.colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(width: 8),

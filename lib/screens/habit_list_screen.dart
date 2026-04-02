@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
+import '../services/theme_service.dart';
 import '../services/mock_data_service.dart';
 import '../models/habit_model.dart';
 import 'add_habit_screen.dart';
@@ -10,8 +11,11 @@ class HabitListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
+
     return Scaffold(
-      backgroundColor: AppColors.primaryLighter,
+      backgroundColor: isDark ? theme.scaffoldBackgroundColor : AppColors.primaryLighter,
       appBar: AppBar(
         title: const Text('My Habits'),
         actions: [
@@ -42,6 +46,7 @@ class HabitListScreen extends StatelessWidget {
 
   Widget _buildCategorySection(BuildContext context, String title, List<HabitModel> habits) {
     if (habits.isEmpty) return const SizedBox.shrink();
+    final theme = Theme.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,19 +55,22 @@ class HabitListScreen extends StatelessWidget {
           padding: const EdgeInsets.only(left: 4.0, bottom: 12.0),
           child: Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppColors.textDark,
+              color: theme.colorScheme.onSurface,
             ),
           ),
         ),
-        ...habits.map((habit) => _buildHabitItem(context, habit)).toList(),
+        ...habits.map((habit) => _buildHabitItem(context, habit)),
       ],
     );
   }
 
   Widget _buildHabitItem(BuildContext context, HabitModel habit) {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -74,7 +82,7 @@ class HabitListScreen extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.cardTheme.color,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -90,7 +98,7 @@ class HabitListScreen extends StatelessWidget {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: MockDataService.getPastelColorForMascot(habit.mascot),
+                color: isDark ? AppColors.darkSurface : MockDataService.getPastelColorForMascot(habit.mascot),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Center(
@@ -107,10 +115,10 @@ class HabitListScreen extends StatelessWidget {
                 children: [
                   Text(
                     habit.name,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textDark,
+                      color: theme.colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -120,9 +128,9 @@ class HabitListScreen extends StatelessWidget {
                       const SizedBox(width: 4),
                       Text(
                         '${habit.streak} day streak',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
-                          color: AppColors.textGrey,
+                          color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey,
                         ),
                       ),
                     ],
@@ -134,7 +142,7 @@ class HabitListScreen extends StatelessWidget {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: habit.isCompletedToday ? AppColors.accentGreen : AppColors.bgMint,
+                color: habit.isCompletedToday ? AppColors.accentGreen : (isDark ? AppColors.darkSurface : AppColors.bgMint),
                 shape: BoxShape.circle,
               ),
               child: Icon(

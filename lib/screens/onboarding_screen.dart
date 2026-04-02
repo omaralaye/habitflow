@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
+import '../services/theme_service.dart';
 import '../widgets/main_navigation.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -35,6 +36,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   ];
 
   Color _getBackgroundColor(String colorName) {
+    final isDark = ThemeService().isDarkMode;
+    if (isDark) return AppColors.darkSurface;
+
     switch (colorName) {
       case 'bgLavender':
         return AppColors.bgLavender;
@@ -55,8 +59,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -95,7 +102,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           Text(
                             _onboardingData[index]['title']!,
                             textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                            style: theme.textTheme.displayLarge?.copyWith(
                               height: 1.2,
                               fontSize: 28,
                             ),
@@ -104,8 +111,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           Text(
                             _onboardingData[index]['description']!,
                             textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: AppColors.textGrey,
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey,
                             ),
                           ),
                           const SizedBox(height: 40),
@@ -175,7 +182,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text('Already have an account? '),
+                      Text(
+                        'Already have an account? ',
+                        style: TextStyle(color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
+                      ),
                       GestureDetector(
                         onTap: () {
                           Navigator.pushReplacement(

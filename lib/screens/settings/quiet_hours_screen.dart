@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../utils/constants.dart';
+import '../../services/theme_service.dart';
 
 class QuietHoursScreen extends StatefulWidget {
   const QuietHoursScreen({super.key});
@@ -15,8 +16,11 @@ class _QuietHoursScreenState extends State<QuietHoursScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
+
     return Scaffold(
-      backgroundColor: AppColors.primaryLighter,
+      backgroundColor: isDark ? theme.scaffoldBackgroundColor : AppColors.primaryLighter,
       appBar: AppBar(
         title: const Text('Quiet Hours'),
       ),
@@ -25,15 +29,15 @@ class _QuietHoursScreenState extends State<QuietHoursScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Pause notifications during your rest hours to maintain your peace.',
-              style: TextStyle(fontSize: 14, color: AppColors.textGrey),
+              style: TextStyle(fontSize: 14, color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
             ),
             const SizedBox(height: 32),
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: theme.cardTheme.color,
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Column(
@@ -41,12 +45,12 @@ class _QuietHoursScreenState extends State<QuietHoursScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'Enable Quiet Hours',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textDark,
+                          color: theme.colorScheme.onSurface,
                         ),
                       ),
                       Switch(
@@ -72,9 +76,9 @@ class _QuietHoursScreenState extends State<QuietHoursScreen> {
               ),
             ),
             const SizedBox(height: 32),
-            const Text(
+            Text(
               'During quiet hours, all habit reminders and app notifications will be silenced.',
-              style: TextStyle(fontSize: 12, color: AppColors.textGrey),
+              style: TextStyle(fontSize: 12, color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
             ),
           ],
         ),
@@ -83,6 +87,8 @@ class _QuietHoursScreenState extends State<QuietHoursScreen> {
   }
 
   Widget _buildTimePicker(String label, TimeOfDay time, Function(TimeOfDay) onTimeChanged) {
+    final isDark = ThemeService().isDarkMode;
+    final theme = Theme.of(context);
     return InkWell(
       onTap: () async {
         final picked = await showTimePicker(
@@ -98,12 +104,12 @@ class _QuietHoursScreenState extends State<QuietHoursScreen> {
           children: [
             Text(
               label,
-              style: const TextStyle(fontSize: 16, color: AppColors.textDark),
+              style: TextStyle(fontSize: 16, color: theme.colorScheme.onSurface),
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.primaryLighter,
+                color: isDark ? AppColors.darkSurface : AppColors.primaryLighter,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
+import '../services/theme_service.dart';
 import 'onboarding_screen.dart';
 import 'settings/quiet_hours_screen.dart';
 import 'settings/email_settings_screen.dart';
@@ -16,18 +17,20 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _pushNotifications = true;
-  bool _darkMode = false;
   bool _weeklyDigest = true;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
+
     return Scaffold(
-      backgroundColor: AppColors.primaryLighter,
+      backgroundColor: isDark ? theme.scaffoldBackgroundColor : AppColors.primaryLighter,
       appBar: AppBar(
         title: const Text('Settings'),
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textDark),
+          icon: Icon(Icons.arrow_back_rounded, color: theme.appBarTheme.titleTextStyle?.color),
         ),
       ),
       body: SingleChildScrollView(
@@ -80,16 +83,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 'Dark Mode',
                 'Adjust colors for night.',
                 onTap: () {
-                  setState(() {
-                    _darkMode = !_darkMode;
-                  });
+                  ThemeService().toggleTheme(!isDark);
                 },
                 trailing: Switch(
-                  value: _darkMode,
+                  value: isDark,
                   onChanged: (v) {
-                    setState(() {
-                      _darkMode = v;
-                    });
+                    ThemeService().toggleTheme(v);
                   },
                   activeThumbColor: AppColors.primary,
                 ),
@@ -202,7 +201,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardTheme.color,
             borderRadius: BorderRadius.circular(24),
           ),
           child: Column(
@@ -211,7 +210,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   children[index],
                   if (index < children.length - 1)
-                    Divider(height: 1, color: AppColors.primaryLighter),
+                    const Divider(height: 1),
                 ],
               );
             }),
@@ -228,6 +227,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required Widget trailing,
     VoidCallback? onTap,
   }) {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
@@ -238,7 +240,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppColors.primaryLighter,
+                color: isDark ? AppColors.darkSurface : AppColors.primaryLighter,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: AppColors.primary, size: 22),
@@ -250,19 +252,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textDark,
+                      color: theme.colorScheme.onSurface,
                     ),
                   ),
                   if (subtitle.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(
                       subtitle,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.textGrey,
+                        color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey,
                       ),
                     ),
                   ],
@@ -307,6 +309,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildSignOutButton(BuildContext context) {
+    final isDark = ThemeService().isDarkMode;
     return SizedBox(
       width: double.infinity,
       height: 60,
@@ -319,7 +322,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           );
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primaryLighter.withOpacity(0.5),
+          backgroundColor: isDark ? AppColors.darkSurface : AppColors.primaryLighter.withOpacity(0.5),
           foregroundColor: AppColors.accentRed,
           elevation: 0,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),

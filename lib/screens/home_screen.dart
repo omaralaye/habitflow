@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
+import '../services/theme_service.dart';
 import '../services/mock_data_service.dart';
 import '../models/habit_model.dart';
 import 'habit_detail_screen.dart';
@@ -11,8 +12,11 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
+
     return Scaffold(
-      backgroundColor: AppColors.primaryLighter,
+      backgroundColor: isDark ? theme.scaffoldBackgroundColor : AppColors.primaryLighter,
       appBar: AppBar(
         title: const Text('Sanctuary'),
         actions: [
@@ -37,12 +41,12 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 24),
             _buildFocusHubPrompt(context),
             const SizedBox(height: 32),
-            const Text(
+            Text(
               'Habit Mascots',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textDark,
+                color: theme.colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 16),
@@ -54,6 +58,8 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildFocusHubPrompt(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -65,7 +71,7 @@ class HomeScreen extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: AppColors.bgSky,
+          color: isDark ? AppColors.darkSurface : AppColors.bgSky,
           borderRadius: BorderRadius.circular(32),
           border: Border.all(color: AppColors.primaryLight.withOpacity(0.3), width: 1),
         ),
@@ -74,7 +80,7 @@ class HomeScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? theme.cardTheme.color : Colors.white,
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.center_focus_strong_rounded, color: AppColors.primary, size: 28),
@@ -84,18 +90,18 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Start Focus Hub',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textDark,
+                      color: theme.colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'Deep focus with your mascots and music.',
-                    style: TextStyle(fontSize: 12, color: AppColors.textGrey),
+                    style: TextStyle(fontSize: 12, color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
                   ),
                 ],
               ),
@@ -207,6 +213,8 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildHabitMascotCard(BuildContext context, HabitModel habit) {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -217,7 +225,7 @@ class HomeScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.cardTheme.color,
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
@@ -232,7 +240,7 @@ class HomeScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.bgLavender,
+                color: isDark ? AppColors.darkSurface : AppColors.bgLavender,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
@@ -252,10 +260,10 @@ class HomeScreen extends StatelessWidget {
             const Spacer(),
             Text(
               habit.name,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textDark,
+                color: theme.colorScheme.onSurface,
               ),
               textAlign: TextAlign.center,
               maxLines: 1,
@@ -267,7 +275,7 @@ class HomeScreen extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: habit.progress / 100,
                 minHeight: 6,
-                backgroundColor: AppColors.primaryLighter,
+                backgroundColor: isDark ? AppColors.darkSurface : AppColors.primaryLighter,
                 valueColor: AlwaysStoppedAnimation<Color>(
                   habit.isCompletedToday ? AppColors.primary : AppColors.primaryLight,
                 ),
@@ -277,16 +285,16 @@ class HomeScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Streak',
-                  style: TextStyle(fontSize: 10, color: AppColors.textGrey),
+                  style: TextStyle(fontSize: 10, color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
                 ),
                 Text(
                   '${habit.streak}d',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textDark,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
               ],

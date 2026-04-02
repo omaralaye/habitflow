@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
+import '../services/theme_service.dart';
 import '../services/mock_data_service.dart';
 import '../models/habit_model.dart';
 import 'add_habit_screen.dart';
@@ -29,8 +30,11 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(widget.habit.name),
         actions: [
@@ -56,7 +60,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
             child: Container(
               height: 50,
               decoration: BoxDecoration(
-                color: AppColors.primaryLighter,
+                color: isDark ? AppColors.darkSurface : AppColors.primaryLighter,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: TabBar(
@@ -67,7 +71,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
                 ),
                 indicatorSize: TabBarIndicatorSize.tab,
                 labelColor: Colors.white,
-                unselectedLabelColor: AppColors.textGrey,
+                unselectedLabelColor: isDark ? AppColors.darkTextSecondary : AppColors.textGrey,
                 dividerColor: Colors.transparent,
                 labelStyle: const TextStyle(fontWeight: FontWeight.bold),
                 tabs: const [
@@ -92,6 +96,9 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
   }
 
   Widget _buildMascotTab() {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -99,7 +106,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
           Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: MockDataService.getPastelColorForMascot(widget.habit.mascot),
+              color: isDark ? theme.cardTheme.color : MockDataService.getPastelColorForMascot(widget.habit.mascot),
               borderRadius: BorderRadius.circular(32),
             ),
             child: Column(
@@ -111,10 +118,10 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
                 const SizedBox(height: 24),
                 Text(
                   '${widget.habit.mascot.name.toUpperCase()} LVL ${widget.habit.mascotLevel}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textDark,
+                    color: theme.colorScheme.onSurface,
                     letterSpacing: 2,
                   ),
                 ),
@@ -131,10 +138,13 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
   }
 
   Widget _buildEvolutionProgress() {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Row(
+        Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
@@ -142,7 +152,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textGrey,
+                color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey,
                 letterSpacing: 1.2,
               ),
             ),
@@ -151,7 +161,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textDark,
+                color: theme.colorScheme.onSurface,
               ),
             ),
           ],
@@ -159,19 +169,19 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
         const SizedBox(height: 12),
         ClipRRect(
           borderRadius: BorderRadius.circular(10),
-          child: const LinearProgressIndicator(
+          child: LinearProgressIndicator(
             value: 0.75,
             minHeight: 12,
-            backgroundColor: Colors.white,
-            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+            backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
+            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
           ),
         ),
         const SizedBox(height: 12),
-        const Text(
+        Text(
           'Keep going to evolve into a Giant Panda!',
           style: TextStyle(
             fontSize: 12,
-            color: AppColors.textGrey,
+            color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey,
             fontStyle: FontStyle.italic,
           ),
         ),
@@ -180,10 +190,13 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
   }
 
   Widget _buildMascotStatus() {
+    final isDark = ThemeService().isDarkMode;
+    final theme = Theme.of(context);
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.primaryLighter,
+        color: isDark ? theme.cardTheme.color : AppColors.primaryLighter,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Row(
@@ -195,7 +208,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
               'Your ${widget.habit.mascot.name.toLowerCase()} is feeling energized today because of your consistent ${widget.habit.name.toLowerCase()} practice!',
               style: TextStyle(
                 fontSize: 14,
-                color: AppColors.textDark,
+                color: theme.colorScheme.onSurface,
                 height: 1.4,
               ),
             ),
@@ -206,6 +219,8 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
   }
 
   Widget _buildStreaksTab() {
+    final theme = Theme.of(context);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -213,12 +228,12 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
         children: [
           _buildStreakSummary(),
           const SizedBox(height: 24),
-          const Text(
+          Text(
             'Weekly History',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppColors.textDark,
+              color: theme.colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 16),
@@ -276,10 +291,13 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
 
   Widget _buildWeeklyHistory() {
     final days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    final isDark = ThemeService().isDarkMode;
+    final theme = Theme.of(context);
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.primaryLighter,
+        color: isDark ? theme.cardTheme.color : AppColors.primaryLighter,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Row(
@@ -290,10 +308,10 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
             children: [
               Text(
                 days[index],
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textGrey,
+                  color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey,
                 ),
               ),
               const SizedBox(height: 12),
@@ -301,7 +319,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: isCompleted ? AppColors.primary : Colors.white,
+                  color: isCompleted ? AppColors.primary : (isDark ? AppColors.darkSurface : Colors.white),
                   shape: BoxShape.circle,
                 ),
                 child: isCompleted
@@ -316,10 +334,13 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
   }
 
   Widget _buildBestStreaks() {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.bgSky,
+        color: isDark ? theme.cardTheme.color : AppColors.bgSky,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Row(
@@ -330,18 +351,18 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Best Streak!',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textDark,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Your longest ${widget.habit.name.toLowerCase()} streak was 28 days back in July.',
-                  style: TextStyle(fontSize: 13, color: AppColors.textGrey),
+                  style: TextStyle(fontSize: 13, color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
                 ),
               ],
             ),

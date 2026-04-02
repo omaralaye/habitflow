@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
+import '../services/theme_service.dart';
 import '../services/mock_data_service.dart';
 import '../models/habit_model.dart';
 
@@ -40,14 +41,16 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
   @override
   Widget build(BuildContext context) {
     final bool isEditing = widget.habit != null;
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(isEditing ? 'Edit Habit' : 'Add Habit'),
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.close_rounded, color: AppColors.textDark),
+          icon: Icon(Icons.close_rounded, color: theme.appBarTheme.titleTextStyle?.color),
         ),
         actions: [
           TextButton(
@@ -99,21 +102,23 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Habit Name',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textDark,
+                color: theme.colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _nameController,
+              style: TextStyle(color: theme.colorScheme.onSurface),
               decoration: InputDecoration(
                 hintText: 'e.g. Morning Meditation',
+                hintStyle: TextStyle(color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
                 filled: true,
-                fillColor: AppColors.primaryLighter,
+                fillColor: isDark ? AppColors.darkSurface : AppColors.primaryLighter,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
                   borderSide: BorderSide.none,
@@ -122,34 +127,34 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
               ),
             ),
             const SizedBox(height: 32),
-            const Text(
+            Text(
               'Choose a Mascot',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textDark,
+                color: theme.colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 16),
             _buildMascotGrid(),
             const SizedBox(height: 32),
-            const Text(
+            Text(
               'Category',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textDark,
+                color: theme.colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 12),
             _buildCategorySelector(),
             const SizedBox(height: 32),
-            const Text(
+            Text(
               'Smoothing Music',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textDark,
+                color: theme.colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 12),
@@ -164,6 +169,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
   }
 
   Widget _buildMascotGrid() {
+    final isDark = ThemeService().isDarkMode;
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -181,7 +187,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
           onTap: () => setState(() => _selectedMascot = mascot),
           child: Container(
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.primary : AppColors.primaryLighter,
+              color: isSelected ? AppColors.primary : (isDark ? AppColors.darkSurface : AppColors.primaryLighter),
               borderRadius: BorderRadius.circular(16),
               border: isSelected ? Border.all(color: AppColors.primary, width: 2) : null,
             ),
@@ -198,6 +204,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
   }
 
   Widget _buildCategorySelector() {
+    final isDark = ThemeService().isDarkMode;
     return Wrap(
       spacing: 8,
       runSpacing: 8,
@@ -213,7 +220,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.primary : AppColors.primaryLighter,
+              color: isSelected ? AppColors.primary : (isDark ? AppColors.darkSurface : AppColors.primaryLighter),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
@@ -221,7 +228,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: isSelected ? Colors.white : AppColors.textGrey,
+                color: isSelected ? Colors.white : (isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
               ),
             ),
           ),
@@ -232,17 +239,19 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
 
   Widget _buildMusicSelector() {
     final musicTracks = MockDataService.getMusicByCategory(_selectedCategory);
+    final isDark = ThemeService().isDarkMode;
+    final theme = Theme.of(context);
 
     if (musicTracks.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.primaryLighter,
+          color: isDark ? AppColors.darkSurface : AppColors.primaryLighter,
           borderRadius: BorderRadius.circular(16),
         ),
-        child: const Text(
+        child: Text(
           'No music tracks available for this category.',
-          style: TextStyle(color: AppColors.textGrey),
+          style: TextStyle(color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
         ),
       );
     }
@@ -260,7 +269,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.primary.withOpacity(0.1) : AppColors.primaryLighter,
+              color: isSelected ? AppColors.primary.withOpacity(0.1) : (isDark ? AppColors.darkSurface : AppColors.primaryLighter),
               borderRadius: BorderRadius.circular(16),
               border: isSelected ? Border.all(color: AppColors.primary, width: 2) : null,
             ),
@@ -268,7 +277,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
               children: [
                 Icon(
                   isSelected ? Icons.music_note_rounded : Icons.music_off_outlined,
-                  color: isSelected ? AppColors.primary : AppColors.textGrey,
+                  color: isSelected ? AppColors.primary : (isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -279,19 +288,19 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                         track.title,
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: isSelected ? AppColors.primary : AppColors.textDark,
+                          color: isSelected ? AppColors.primary : theme.colorScheme.onSurface,
                         ),
                       ),
                       Text(
                         track.artist,
-                        style: const TextStyle(fontSize: 12, color: AppColors.textGrey),
+                        style: TextStyle(fontSize: 12, color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
                       ),
                     ],
                   ),
                 ),
                 Text(
                   track.duration,
-                  style: const TextStyle(fontSize: 12, color: AppColors.textGrey),
+                  style: TextStyle(fontSize: 12, color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
                 ),
               ],
             ),
@@ -302,17 +311,19 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
   }
 
   Widget _buildReminderSection() {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.bgSky,
+        color: isDark ? theme.cardTheme.color : AppColors.bgSky,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Row(
         children: [
           const Icon(Icons.notifications_active_rounded, color: AppColors.primary),
           const SizedBox(width: 16),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -321,13 +332,13 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textDark,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
                   '8:00 AM',
-                  style: TextStyle(fontSize: 14, color: AppColors.textGrey),
+                  style: TextStyle(fontSize: 14, color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
                 ),
               ],
             ),

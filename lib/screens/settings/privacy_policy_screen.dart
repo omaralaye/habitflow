@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import '../../utils/constants.dart';
+import '../../services/theme_service.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
+
     return Scaffold(
-      backgroundColor: AppColors.primaryLighter,
+      backgroundColor: isDark ? theme.scaffoldBackgroundColor : AppColors.primaryLighter,
       appBar: AppBar(
         title: const Text('Privacy Policy'),
       ),
@@ -16,42 +20,42 @@ class PrivacyPolicyScreen extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: theme.cardTheme.color,
             borderRadius: BorderRadius.circular(24),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Your Privacy Matters',
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textDark,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'At Habit Flow, we are committed to protecting your privacy. This policy outlines how we handle your data.',
-                style: TextStyle(fontSize: 16, color: AppColors.textGrey),
+                style: TextStyle(fontSize: 16, color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
               ),
               const SizedBox(height: 24),
-              _buildSectionTitle('1. Data Collection'),
-              const Text(
+              _buildSectionTitle(context, '1. Data Collection'),
+              Text(
                 'We collect information you provide directly to us, such as your email address and habit tracking data.',
-                style: TextStyle(fontSize: 14, color: AppColors.textGrey),
+                style: TextStyle(fontSize: 14, color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
               ),
               const SizedBox(height: 16),
-              _buildSectionTitle('2. Use of Information'),
-              const Text(
+              _buildSectionTitle(context, '2. Use of Information'),
+              Text(
                 'Your data is used to provide, maintain, and improve our services, as well as to develop new features.',
-                style: TextStyle(fontSize: 14, color: AppColors.textGrey),
+                style: TextStyle(fontSize: 14, color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
               ),
               const SizedBox(height: 16),
-              _buildSectionTitle('3. Data Security'),
-              const Text(
+              _buildSectionTitle(context, '3. Data Security'),
+              Text(
                 'We use industry-standard security measures to protect your personal information from unauthorized access.',
-                style: TextStyle(fontSize: 14, color: AppColors.textGrey),
+                style: TextStyle(fontSize: 14, color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
               ),
             ],
           ),
@@ -60,15 +64,16 @@ class PrivacyPolicyScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(BuildContext context, String title) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.bold,
-          color: AppColors.textDark,
+          color: theme.colorScheme.onSurface,
         ),
       ),
     );

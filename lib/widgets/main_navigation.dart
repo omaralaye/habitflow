@@ -43,7 +43,7 @@ class _MainNavigationState extends State<MainNavigation> {
       extendBody: true,
       bottomNavigationBar: AnimatedNotchBottomBar(
         notchBottomBarController: _controller,
-        color: Colors.white,
+        color: Theme.of(context).cardTheme.color ?? Colors.white,
         showLabel: true,
         notchColor: AppColors.primary,
         removeMargins: false,
