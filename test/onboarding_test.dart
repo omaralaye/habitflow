@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habitflow/screens/onboarding_screen.dart';
-import 'package:habitflow/widgets/main_navigation.dart';
+import 'package:habitflow/screens/signup_screen.dart';
+import 'package:habitflow/screens/login_screen.dart';
 
 void main() {
-  testWidgets('OnboardingScreen has 3 pages and navigates to MainNavigation', (WidgetTester tester) async {
+  testWidgets('OnboardingScreen has 3 pages and navigates to SignupScreen', (WidgetTester tester) async {
     await tester.pumpWidget(const MaterialApp(home: OnboardingScreen()));
 
     // Page 1
@@ -34,7 +35,16 @@ void main() {
     await tester.tap(find.text('Get Started'));
     await tester.pumpAndSettle();
 
-    // Should be on MainNavigation
-    expect(find.byType(MainNavigation), findsOneWidget);
+    // Should be on SignupScreen
+    expect(find.byType(SignupScreen), findsOneWidget);
+  });
+
+  testWidgets('OnboardingScreen Log In link navigates to LoginScreen', (WidgetTester tester) async {
+    await tester.pumpWidget(const MaterialApp(home: OnboardingScreen()));
+
+    await tester.tap(find.text('Log In'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(LoginScreen), findsOneWidget);
   });
 }
