@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 import '../services/theme_service.dart';
-import '../widgets/main_navigation.dart';
+import 'login_screen.dart';
+import 'signup_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -155,9 +156,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             curve: Curves.easeInOut,
                           );
                         } else {
-                          Navigator.pushReplacement(
+                          Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => const MainNavigation()),
+                            MaterialPageRoute(builder: (_) => const SignupScreen()),
                           );
                         }
                       },
@@ -188,9 +189,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                       GestureDetector(
                         onTap: () {
-                          Navigator.pushReplacement(
+                          Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => const MainNavigation()),
+                            MaterialPageRoute(builder: (_) => const LoginScreen()),
                           );
                         },
                         child: const Text(
