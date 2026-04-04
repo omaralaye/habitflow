@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'utils/constants.dart';
 import 'screens/onboarding_screen.dart';
 import 'services/theme_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  // TODO: Replace with your actual Supabase URL and Anon Key
+  await Supabase.initialize(
+    url: 'https://placeholder-url.supabase.co',
+    anonKey: 'placeholder-anon-key',
+  );
   runApp(const MyApp());
 }
 

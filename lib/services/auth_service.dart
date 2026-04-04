@@ -1,26 +1,25 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthService extends ChangeNotifier {
   static final AuthService _instance = AuthService._internal();
   factory AuthService() => _instance;
   AuthService._internal() {
-    _auth.authStateChanges().listen((User? user) {
-      _user = user;
+    _supabase.auth.onAuthStateChange.listen((data) {
+      _user = data.session?.user;
       notifyListeners();
     });
   }
 
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final SupabaseClient _supabase = Supabase.instance.client;
   User? _user;
 
-  bool get isSignedIn => _user != null;
-  User? get user => _user;
+  bool get isSignedIn => _supabase.auth.currentSession != null;
+  User? get user => _user ?? _supabase.auth.currentUser;
 
   Future<void> signIn(String email, String password) async {
     try {
-      await _auth.signInWithEmailAndPassword(email: email, password: password);
+      await _supabase.auth.signInWithPassword(email: email, password: password);
     } catch (e) {
       rethrow;
     }
@@ -28,14 +27,30 @@ class AuthService extends ChangeNotifier {
 
   Future<void> signUp(String email, String password, {String? name, String? emoji}) async {
     try {
-      UserCredential credential = await _auth.createUserWithEmailAndPassword(email: email, password: password);
-      if (credential.user != null) {
-        await FirebaseFirestore.instance.collection('users').doc(credential.user!.uid).set({
-          'name': name ?? '',
-          'email': email,
-          'emoji': emoji ?? '🦊',
-          'createdAt': FieldValue.serverTimestamp(),
-        });
+      final AuthResponse res = await _supabase.auth.signUp(
+        email: email,
+        password: password,
+        data: {
+          'full_name': name,
+          'emoji': emoji,
+        },
+      );
+
+      if (res.user != null) {
+        // In Supabase, we can also use a trigger to create a profile in a public table.
+        // For simplicity here, we'll assume the metadata is enough or handle it via a profiles table if needed.
+        // Let's also insert into a profiles table if it exists.
+        try {
+          await _supabase.from('profiles').upsert({
+            'id': res.user!.id,
+            'full_name': name,
+            'emoji': emoji,
+            'updated_at': DateTime.now().toIso8601String(),
+          });
+        } catch (e) {
+          // profiles table might not exist yet, metadata is our fallback
+          debugPrint('Failed to update profiles table: $e');
+        }
       }
     } catch (e) {
       rethrow;
@@ -43,18 +58,14 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<void> signOut() async {
-    await _auth.signOut();
+    await _supabase.auth.signOut();
   }
 
   Future<void> signInWithGoogle() async {
-    // Note: Actual Google Sign-In requires google_sign_in package
-    // For now, we'll keep it as a placeholder but using FirebaseAuth logic
-    // This is often handled by a separate plugin that provides the credential
-    throw UnimplementedError('Google Sign-In requires additional configuration.');
+    await _supabase.auth.signInWithOAuth(OAuthProvider.google);
   }
 
   Future<void> signInWithApple() async {
-    // Similar to Google Sign-In, requires sign_in_with_apple package
-    throw UnimplementedError('Apple Sign-In requires additional configuration.');
+    await _supabase.auth.signInWithOAuth(OAuthProvider.apple);
   }
 }

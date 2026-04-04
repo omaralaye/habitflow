@@ -1,5 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/constants.dart';
 import '../services/theme_service.dart';
 import '../services/auth_service.dart';
@@ -48,22 +48,30 @@ class ProfileScreen extends StatelessWidget {
   Widget _buildProfileCard(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = ThemeService().isDarkMode;
-    final uid = AuthService().user?.uid;
+    final user = AuthService().user;
 
-    if (uid == null) {
+    if (user == null) {
       return const Center(child: Text('Please log in to see your profile'));
     }
 
-    return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
+    return FutureBuilder<PostgrestMap?>(
+      future: Supabase.instance.client
+          .from('profiles')
+          .select()
+          .eq('id', user.id)
+          .maybeSingle(),
       builder: (context, snapshot) {
         String name = 'User';
-        String emoji = '🦊'; // Consistent default emoji
+        String emoji = '🦊';
 
-        if (snapshot.hasData && snapshot.data!.exists) {
-          final data = snapshot.data!.data() as Map<String, dynamic>;
-          name = data['name'] ?? 'User';
+        if (snapshot.hasData && snapshot.data != null) {
+          final data = snapshot.data!;
+          name = data['full_name'] ?? 'User';
           emoji = data['emoji'] ?? '🦊';
+        } else if (user.userMetadata != null) {
+          // Fallback to metadata if profile table doesn't have it yet
+          name = user.userMetadata!['full_name'] ?? 'User';
+          emoji = user.userMetadata!['emoji'] ?? '🦊';
         }
 
         return Container(
