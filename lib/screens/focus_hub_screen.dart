@@ -240,7 +240,6 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
 
   Widget _buildHabitSelector() {
     final theme = Theme.of(context);
-    final isDark = ThemeService().isDarkMode;
 
     return SizedBox(
       height: 100,

@@ -31,29 +31,15 @@ class HabitListScreen extends StatelessWidget {
           const SizedBox(width: 8),
         ],
       ),
-      body: Builder(
-        builder: (context) {
-          final habits = MockDataService.habits;
-          if (habits.isEmpty) {
-            return const Center(child: Text('No habits found. Add your first habit!'));
-          }
-
-          final categories = habits.map((h) => h.category).toSet().toList();
-
-          return ListView.separated(
-            padding: const EdgeInsets.all(24),
-            itemCount: categories.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 24),
-            itemBuilder: (context, index) {
-              final category = categories[index];
-              return _buildCategorySection(
-                context,
-                category,
-                habits.where((h) => h.category == category).toList(),
-              );
-            },
-          );
-        },
+      body: ListView(
+        padding: const EdgeInsets.all(24),
+        children: [
+          _buildCategorySection(context, 'Mindfulness', MockDataService.habits.where((h) => h.category == 'Mindfulness').toList()),
+          const SizedBox(height: 24),
+          _buildCategorySection(context, 'Health', MockDataService.habits.where((h) => h.category == 'Health').toList()),
+          const SizedBox(height: 24),
+          _buildCategorySection(context, 'Learning', MockDataService.habits.where((h) => h.category == 'Learning').toList()),
+        ],
       ),
     );
   }
