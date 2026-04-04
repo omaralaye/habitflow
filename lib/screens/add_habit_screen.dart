@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 import '../services/theme_service.dart';
 import '../services/mock_data_service.dart';
+import '../services/database_service.dart';
 import '../models/habit_model.dart';
 
 class AddHabitScreen extends StatefulWidget {
@@ -54,7 +55,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               if (isEditing) {
                 // Update the existing habit
                 final updatedHabit = widget.habit!.copyWith(
@@ -65,14 +66,12 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                   musicId: _selectedMusicId,
                 );
 
-                final index = MockDataService.habits.indexWhere((h) => h.id == widget.habit!.id);
-                if (index != -1) {
-                  MockDataService.habits[index] = updatedHabit;
-                }
+                await DatabaseService().updateHabit(updatedHabit);
               } else {
+                if (!context.mounted) return;
                 // Create the new habit
                 final newHabit = HabitModel(
-                  id: DateTime.now().millisecondsSinceEpoch.toString(),
+                  id: '', // Firestore will generate this
                   name: _nameController.text.isEmpty ? 'New Habit' : _nameController.text,
                   color: MockDataService.getPastelColorForMascot(_selectedMascot),
                   streak: 0,
@@ -81,10 +80,10 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                   category: _selectedCategory,
                   musicId: _selectedMusicId,
                 );
-                MockDataService.habits.add(newHabit);
+                await DatabaseService().addHabit(newHabit);
               }
 
-              Navigator.pop(context);
+              if (mounted) Navigator.pop(context);
             },
             child: Text(
               isEditing ? 'Save' : 'Create',
