@@ -17,8 +17,11 @@ class _SignupScreenState extends State<SignupScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController();
+  String _selectedEmoji = '🦊';
   bool _isPasswordVisible = false;
   bool _isLoading = false;
+
+  final List<String> _emojis = ['🦊', '🐼', '🐨', '🦁', '🐯', '🐸', '🦄', '🐲'];
 
   @override
   void dispose() {
@@ -32,7 +35,12 @@ class _SignupScreenState extends State<SignupScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       try {
-        await AuthService().signUp(_emailController.text, _passwordController.text);
+        await AuthService().signUp(
+          _emailController.text,
+          _passwordController.text,
+          name: _nameController.text,
+          emoji: _selectedEmoji,
+        );
         if (mounted) {
           Navigator.pushAndRemoveUntil(
             context,
@@ -110,12 +118,49 @@ class _SignupScreenState extends State<SignupScreen> {
                           color: isDark ? AppColors.darkSurface : AppColors.secondaryLight,
                           borderRadius: BorderRadius.circular(30),
                         ),
-                        child: const Center(
+                        child: Center(
                           child: Text(
-                            '✨',
-                            style: TextStyle(fontSize: 50),
+                            _selectedEmoji,
+                            style: const TextStyle(fontSize: 50),
                           ),
                         ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Center(
+                      child: Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: _emojis.map((emoji) {
+                          final isSelected = _selectedEmoji == emoji;
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _selectedEmoji = emoji;
+                              });
+                            },
+                            child: Container(
+                              width: 50,
+                              height: 50,
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? AppColors.primary.withValues(alpha: 0.1)
+                                    : (isDark ? AppColors.darkSurface : Colors.white),
+                                borderRadius: BorderRadius.circular(15),
+                                border: Border.all(
+                                  color: isSelected ? AppColors.primary : Colors.transparent,
+                                  width: 2,
+                                ),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  emoji,
+                                  style: const TextStyle(fontSize: 24),
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
                       ),
                     ),
                     const SizedBox(height: 40),

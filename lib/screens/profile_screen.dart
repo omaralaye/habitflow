@@ -1,6 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 import '../services/theme_service.dart';
+import '../services/auth_service.dart';
 import 'settings_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -46,59 +48,78 @@ class ProfileScreen extends StatelessWidget {
   Widget _buildProfileCard(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = ThemeService().isDarkMode;
+    final uid = AuthService().user?.uid;
 
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: theme.cardTheme.color,
-        borderRadius: BorderRadius.circular(32),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 15,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            width: 120,
-            height: 120,
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurface : AppColors.bgLavender,
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.primaryLight, width: 4),
-            ),
-            child: const Center(
-              child: Text(
-                '🧵',
-                style: TextStyle(fontSize: 60),
+    if (uid == null) {
+      return const Center(child: Text('Please log in to see your profile'));
+    }
+
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
+      builder: (context, snapshot) {
+        String name = 'User';
+        String emoji = '🦊'; // Consistent default emoji
+
+        if (snapshot.hasData && snapshot.data!.exists) {
+          final data = snapshot.data!.data() as Map<String, dynamic>;
+          name = data['name'] ?? 'User';
+          emoji = data['emoji'] ?? '🦊';
+        }
+
+        return Container(
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(
+            color: theme.cardTheme.color,
+            borderRadius: BorderRadius.circular(32),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.02),
+                blurRadius: 15,
+                offset: const Offset(0, 10),
               ),
-            ),
+            ],
           ),
-          const SizedBox(height: 24),
-          Text(
-            'Alex Rivers',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.onSurface,
-            ),
+          child: Column(
+            children: [
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.darkSurface : AppColors.bgLavender,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.primaryLight, width: 4),
+                ),
+                child: Center(
+                  child: Text(
+                    emoji,
+                    style: const TextStyle(fontSize: 60),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                name,
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Level 24 Habit Master',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(height: 32),
+              _buildXPProgress(context),
+            ],
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'Level 24 Habit Master',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: AppColors.primary,
-            ),
-          ),
-          const SizedBox(height: 32),
-          _buildXPProgress(context),
-        ],
-      ),
+        );
+      },
     );
   }
 
