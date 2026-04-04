@@ -1,67 +1,71 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/habit_model.dart';
-import 'auth_service.dart';
 
 class DatabaseService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final String? _uid = AuthService().user?.uid;
-
-  CollectionReference get _habitsRef => _db.collection('users').doc(_uid).collection('habits');
+  final SupabaseClient _supabase = Supabase.instance.client;
+  String? get _uid => _supabase.auth.currentUser?.id;
 
   Stream<List<HabitModel>> get habitsStream {
     if (_uid == null) return Stream.value([]);
-    return _habitsRef.snapshots().map((snapshot) {
-      return snapshot.docs.map((doc) {
-        final data = doc.data() as Map<String, dynamic>;
-        return _habitFromFirestore(doc.id, data);
-      }).toList();
-    });
+    return _supabase
+        .from('habits')
+        .stream(primaryKey: ['id'])
+        .eq('user_id', _uid!)
+        .map((data) {
+          return data.map((map) => _habitFromSupabase(map)).toList();
+        });
   }
 
   Future<void> addHabit(HabitModel habit) async {
     if (_uid == null) return;
-    await _habitsRef.add(_habitToFirestore(habit));
+    await _supabase.from('habits').insert({
+      ..._habitToSupabase(habit),
+      'user_id': _uid,
+    });
   }
 
   Future<void> updateHabit(HabitModel habit) async {
     if (_uid == null) return;
-    await _habitsRef.doc(habit.id).update(_habitToFirestore(habit));
+    await _supabase
+        .from('habits')
+        .update(_habitToSupabase(habit))
+        .eq('id', habit.id);
   }
 
   Future<void> deleteHabit(String habitId) async {
     if (_uid == null) return;
-    await _habitsRef.doc(habitId).delete();
+    await _supabase.from('habits').delete().eq('id', habitId);
   }
 
-  HabitModel _habitFromFirestore(String id, Map<String, dynamic> data) {
+  HabitModel _habitFromSupabase(Map<String, dynamic> data) {
     return HabitModel(
-      id: id,
+      id: data['id'].toString(),
       name: data['name'] ?? '',
       color: Color(data['color'] as int? ?? 0xFFFFFFFF),
       streak: data['streak'] ?? 0,
-      completedDays: List<int>.from(data['completedDays'] ?? []),
+      completedDays: List<int>.from(data['completed_days'] ?? []),
       mascot: MascotType.values.byName(data['mascot'] ?? 'panda'),
-      mascotLevel: data['mascotLevel'] ?? 1,
-      progress: data['progress'] ?? 0,
+      mascotLevel: (data['mascot_level'] as num?)?.toInt() ?? 1,
+      progress: (data['progress'] as num?)?.toInt() ?? 0,
       category: data['category'] ?? 'General',
-      isCompletedToday: data['isCompletedToday'] ?? false,
-      musicId: data['musicId'],
+      isCompletedToday: data['is_completed_today'] ?? false,
+      musicId: data['music_id'],
     );
   }
 
-  Map<String, dynamic> _habitToFirestore(HabitModel habit) {
+  Map<String, dynamic> _habitToSupabase(HabitModel habit) {
     return {
       'name': habit.name,
       'color': habit.color.toARGB32(),
       'streak': habit.streak,
-      'completedDays': habit.completedDays,
+      'completed_days': habit.completedDays,
       'mascot': habit.mascot.name,
-      'mascotLevel': habit.mascotLevel,
+      'mascot_level': habit.mascotLevel,
       'progress': habit.progress,
       'category': habit.category,
-      'isCompletedToday': habit.isCompletedToday,
-      'musicId': habit.musicId,
+      'is_completed_today': habit.isCompletedToday,
+      'music_id': habit.musicId,
     };
   }
 }

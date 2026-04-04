@@ -1,18 +1,17 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthService extends ChangeNotifier {
   static final AuthService _instance = AuthService._internal();
   factory AuthService() => _instance;
   AuthService._internal() {
-    _auth.authStateChanges().listen((User? user) {
-      _user = user;
+    _supabase.auth.onAuthStateChange.listen((data) {
+      _user = data.session?.user;
       notifyListeners();
     });
   }
 
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final SupabaseClient _supabase = Supabase.instance.client;
   User? _user;
 
   bool get isSignedIn => _user != null;
@@ -20,7 +19,7 @@ class AuthService extends ChangeNotifier {
 
   Future<void> signIn(String email, String password) async {
     try {
-      await _auth.signInWithEmailAndPassword(email: email, password: password);
+      await _supabase.auth.signInWithPassword(email: email, password: password);
     } catch (e) {
       rethrow;
     }
@@ -28,13 +27,14 @@ class AuthService extends ChangeNotifier {
 
   Future<void> signUp(String email, String password, {String? name, String? emoji}) async {
     try {
-      UserCredential credential = await _auth.createUserWithEmailAndPassword(email: email, password: password);
-      if (credential.user != null) {
-        await FirebaseFirestore.instance.collection('users').doc(credential.user!.uid).set({
+      final AuthResponse response = await _supabase.auth.signUp(email: email, password: password);
+      if (response.user != null) {
+        await _supabase.from('profiles').insert({
+          'id': response.user!.id,
           'name': name ?? '',
           'email': email,
           'emoji': emoji ?? '🦊',
-          'createdAt': FieldValue.serverTimestamp(),
+          'created_at': DateTime.now().toIso8601String(),
         });
       }
     } catch (e) {
@@ -43,18 +43,14 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<void> signOut() async {
-    await _auth.signOut();
+    await _supabase.auth.signOut();
   }
 
   Future<void> signInWithGoogle() async {
-    // Note: Actual Google Sign-In requires google_sign_in package
-    // For now, we'll keep it as a placeholder but using FirebaseAuth logic
-    // This is often handled by a separate plugin that provides the credential
     throw UnimplementedError('Google Sign-In requires additional configuration.');
   }
 
   Future<void> signInWithApple() async {
-    // Similar to Google Sign-In, requires sign_in_with_apple package
     throw UnimplementedError('Apple Sign-In requires additional configuration.');
   }
 }

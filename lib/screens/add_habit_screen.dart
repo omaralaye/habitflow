@@ -71,7 +71,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                 if (!context.mounted) return;
                 // Create the new habit
                 final newHabit = HabitModel(
-                  id: '', // Firestore will generate this
+                  id: '', // Database will generate this
                   name: _nameController.text.isEmpty ? 'New Habit' : _nameController.text,
                   color: MockDataService.getPastelColorForMascot(_selectedMascot),
                   streak: 0,
