@@ -55,35 +55,13 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
         actions: [
           TextButton(
             onPressed: () {
-              if (isEditing) {
-                // Update the existing habit
-                final updatedHabit = widget.habit!.copyWith(
-                  name: _nameController.text.isEmpty ? 'New Habit' : _nameController.text,
-                  color: MockDataService.getPastelColorForMascot(_selectedMascot),
-                  mascot: _selectedMascot,
-                  category: _selectedCategory,
-                  musicId: _selectedMusicId,
-                );
-
-                final index = MockDataService.habits.indexWhere((h) => h.id == widget.habit!.id);
-                if (index != -1) {
-                  MockDataService.habits[index] = updatedHabit;
-                }
-              } else {
-                // Create the new habit
-                final newHabit = HabitModel(
-                  id: DateTime.now().millisecondsSinceEpoch.toString(),
-                  name: _nameController.text.isEmpty ? 'New Habit' : _nameController.text,
-                  color: MockDataService.getPastelColorForMascot(_selectedMascot),
-                  streak: 0,
-                  completedDays: [],
-                  mascot: _selectedMascot,
-                  category: _selectedCategory,
-                  musicId: _selectedMusicId,
-                );
-                MockDataService.habits.add(newHabit);
-              }
-
+              // For now, just show a message since we're using mock data
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(isEditing ? 'Habit updated (mock data)' : 'Habit created (mock data)'),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
               Navigator.pop(context);
             },
             child: Text(

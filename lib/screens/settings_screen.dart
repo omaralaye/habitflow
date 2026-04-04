@@ -315,10 +315,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       height: 60,
       child: ElevatedButton(
         onPressed: () {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (_) => const OnboardingScreen()),
-            (route) => false,
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Sign out functionality not implemented yet')),
           );
         },
         style: ElevatedButton.styleFrom(

@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 import '../services/theme_service.dart';
@@ -101,6 +102,235 @@ class ProfileScreen extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildXPProgress(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'XP Progress',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+            Text(
+              '2,450 / 3,000 XP',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        LinearProgressIndicator(
+          value: 0.82,
+          backgroundColor: AppColors.primaryLighter,
+          valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMilestones(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: theme.cardTheme.color,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 15,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Milestones',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildMilestoneItem(
+            context,
+            'First Habit Completed',
+            'Completed your first habit',
+            '🏆',
+            true,
+          ),
+          const SizedBox(height: 12),
+          _buildMilestoneItem(
+            context,
+            '7-Day Streak',
+            'Maintained a habit for 7 days',
+            '🔥',
+            true,
+          ),
+          const SizedBox(height: 12),
+          _buildMilestoneItem(
+            context,
+            'Habit Master',
+            'Completed 50 habits',
+            '👑',
+            false,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMilestoneItem(
+    BuildContext context,
+    String title,
+    String description,
+    String emoji,
+    bool isCompleted,
+  ) {
+    final theme = Theme.of(context);
+
+    return Row(
+      children: [
+        Container(
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            color: isCompleted ? AppColors.accentGreen.withOpacity(0.1) : AppColors.textGrey.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: Center(
+            child: Text(
+              emoji,
+              style: const TextStyle(fontSize: 24),
+            ),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: isCompleted ? theme.colorScheme.onSurface : AppColors.textGrey,
+                ),
+              ),
+              Text(
+                description,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textGrey,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (isCompleted)
+          const Icon(
+            Icons.check_circle,
+            color: AppColors.accentGreen,
+            size: 24,
+          ),
+      ],
+    );
+  }
+
+  Widget _buildGlobalRank(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = ThemeService().isDarkMode;
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: theme.cardTheme.color,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 15,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Global Rank',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Center(
+                  child: Text(
+                    '#247',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Top 5% of Habit Masters',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                    Text(
+                      'Keep up the great work!',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textGrey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
 
   Widget _buildXPProgress(BuildContext context) {
     final theme = Theme.of(context);
@@ -239,68 +469,68 @@ class ProfileScreen extends StatelessWidget {
       },
       child: Container(
         padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: theme.cardTheme.color,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(16),
+        decoration: BoxDecoration(
+          color: theme.cardTheme.color,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
             ),
-            child: const Icon(Icons.emoji_events_rounded, color: Colors.white),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Global Rank',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey,
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(Icons.emoji_events_rounded, color: Colors.white),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Global Rank',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Text(
-                      '#412',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurface,
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Text(
+                        '#412',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onSurface,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    const Icon(Icons.arrow_upward_rounded, color: Colors.green, size: 16),
-                    const Text(
-                      '24',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.green,
-                        fontWeight: FontWeight.bold,
+                      const SizedBox(width: 8),
+                      const Icon(Icons.arrow_upward_rounded, color: Colors.green, size: 16),
+                      const Text(
+                        '24',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.green,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-          const Icon(Icons.chevron_right_rounded, color: AppColors.textGrey),
-        ],
+            const Icon(Icons.chevron_right_rounded, color: AppColors.textGrey),
+          ],
+        ),
       ),
-    ),);
+    );
   }
-}
