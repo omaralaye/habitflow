@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -25,9 +26,17 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  Future<void> signUp(String email, String password) async {
+  Future<void> signUp(String email, String password, {String? name, String? emoji}) async {
     try {
-      await _auth.createUserWithEmailAndPassword(email: email, password: password);
+      UserCredential credential = await _auth.createUserWithEmailAndPassword(email: email, password: password);
+      if (credential.user != null) {
+        await FirebaseFirestore.instance.collection('users').doc(credential.user!.uid).set({
+          'name': name ?? '',
+          'email': email,
+          'emoji': emoji ?? '🦊',
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
     } catch (e) {
       rethrow;
     }

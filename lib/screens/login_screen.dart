@@ -18,6 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _isLoading = false;
+  final String _loginEmoji = '🐢'; // Adding a friendly emoji for login
 
   @override
   void dispose() {
@@ -108,10 +109,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           color: isDark ? AppColors.darkSurface : AppColors.primaryLighter,
                           borderRadius: BorderRadius.circular(30),
                         ),
-                        child: const Center(
+                        child: Center(
                           child: Text(
-                            '🌿',
-                            style: TextStyle(fontSize: 50),
+                            _loginEmoji,
+                            style: const TextStyle(fontSize: 50),
                           ),
                         ),
                       ),
