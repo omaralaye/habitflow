@@ -152,3 +152,8 @@ class AppStyles {
     ),
   );
 }
+
+class SupabaseConstants {
+  static const String SUPABASE_URL = 'https://erhcgrvaiqhzdbgwmglc.supabase.co';
+  static const String SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVyaGNncnZhaXFoemRiZ3dtZ2xjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyODYzNDYsImV4cCI6MjA5MDg2MjM0Nn0.d0Br3bp_bJJTrbyZ-5heJ3dQi46DwhqqIPJ1GiKKwKU';
+}
