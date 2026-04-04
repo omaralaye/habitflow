@@ -5,6 +5,7 @@ import '../services/mock_data_service.dart';
 import '../models/habit_model.dart';
 import 'add_habit_screen.dart';
 import 'habit_detail_screen.dart';
+import '../widgets/shared/signed_in_badge.dart';
 
 class HabitListScreen extends StatelessWidget {
   const HabitListScreen({super.key});
@@ -19,6 +20,8 @@ class HabitListScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('My Habits'),
         actions: [
+          const SignedInBadge(),
+          const SizedBox(width: 8),
           IconButton(
             onPressed: () {
               Navigator.push(

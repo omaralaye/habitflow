@@ -4,6 +4,7 @@ import '../services/theme_service.dart';
 import '../services/mock_data_service.dart';
 import '../models/habit_model.dart';
 import '../models/music_model.dart';
+import '../widgets/shared/signed_in_badge.dart';
 
 class FocusHubScreen extends StatefulWidget {
   const FocusHubScreen({super.key});
@@ -93,6 +94,8 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
       appBar: AppBar(
         title: const Text('Focus Hub'),
         actions: [
+          const SignedInBadge(),
+          const SizedBox(width: 8),
           IconButton(
             onPressed: _showInfoDialog,
             icon: const Icon(Icons.info_outline_rounded, color: AppColors.primary),
@@ -240,7 +243,6 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
 
   Widget _buildHabitSelector() {
     final theme = Theme.of(context);
-    final isDark = ThemeService().isDarkMode;
 
     return SizedBox(
       height: 100,

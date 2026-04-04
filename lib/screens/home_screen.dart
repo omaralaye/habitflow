@@ -6,6 +6,7 @@ import '../models/habit_model.dart';
 import 'habit_detail_screen.dart';
 import 'settings_screen.dart';
 import 'focus_hub_screen.dart';
+import '../widgets/shared/signed_in_badge.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -20,6 +21,8 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Sanctuary'),
         actions: [
+          const SignedInBadge(),
+          const SizedBox(width: 8),
           IconButton(
             onPressed: () {
               Navigator.push(

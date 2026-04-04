@@ -7,6 +7,8 @@ import 'settings/email_settings_screen.dart';
 import 'settings/security_settings_screen.dart';
 import 'settings/privacy_policy_screen.dart';
 import 'settings/terms_of_service_screen.dart';
+import '../widgets/shared/signed_in_badge.dart';
+import '../services/auth_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -32,6 +34,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           onPressed: () => Navigator.pop(context),
           icon: Icon(Icons.arrow_back_rounded, color: theme.appBarTheme.titleTextStyle?.color),
         ),
+        actions: [
+          const SignedInBadge(),
+          const SizedBox(width: 16),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -315,6 +321,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       height: 60,
       child: ElevatedButton(
         onPressed: () {
+          AuthService().signOut();
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (_) => const OnboardingScreen()),

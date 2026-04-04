@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 import '../services/theme_service.dart';
 import '../services/mock_data_service.dart';
+import '../widgets/shared/signed_in_badge.dart';
 
 class StatisticsScreen extends StatelessWidget {
   const StatisticsScreen({super.key});
@@ -16,6 +17,8 @@ class StatisticsScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Statistics'),
         actions: [
+          const SignedInBadge(),
+          const SizedBox(width: 8),
           IconButton(
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
