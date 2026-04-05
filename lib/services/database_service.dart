@@ -58,6 +58,16 @@ class DatabaseService {
     });
   }
 
+  Future<bool> hasHabits() async {
+    if (_uid == null) return false;
+    final response = await _supabase
+        .from('habits')
+        .select('id')
+        .eq('user_id', _uid!)
+        .limit(1);
+    return (response as List).isNotEmpty;
+  }
+
   Future<void> updateHabit(HabitModel habit) async {
     if (_uid == null) return;
     await _supabase
