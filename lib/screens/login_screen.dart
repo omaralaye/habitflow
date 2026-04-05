@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 import '../services/theme_service.dart';
 import 'signup_screen.dart';
-import '../widgets/main_navigation.dart';
+import '../utils/navigation_helper.dart';
 import '../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -39,11 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Login successful')),
           );
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (_) => const MainNavigation()),
-            (route) => false,
-          );
+          await NavigationHelper.navigateAfterAuth(context);
         }
       } catch (e) {
         if (mounted) {
@@ -68,11 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Google login successful (mock)')),
       );
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const MainNavigation()),
-        (route) => false,
-      );
+      await NavigationHelper.navigateAfterAuth(context);
     }
     if (mounted) setState(() => _isLoading = false);
   }
@@ -85,11 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Apple login successful (mock)')),
       );
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const MainNavigation()),
-        (route) => false,
-      );
+      await NavigationHelper.navigateAfterAuth(context);
     }
     if (mounted) setState(() => _isLoading = false);
   }

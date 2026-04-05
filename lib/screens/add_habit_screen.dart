@@ -4,10 +4,12 @@ import '../utils/constants.dart';
 import '../services/theme_service.dart';
 import '../services/database_service.dart';
 import '../models/habit_model.dart';
+import '../widgets/main_navigation.dart';
 
 class AddHabitScreen extends StatefulWidget {
   final HabitModel? habit;
-  const AddHabitScreen({super.key, this.habit});
+  final bool isFirstHabit;
+  const AddHabitScreen({super.key, this.habit, this.isFirstHabit = false});
 
   @override
   State<AddHabitScreen> createState() => _AddHabitScreenState();
@@ -50,10 +52,13 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(isEditing ? 'Edit Habit' : 'Add Habit'),
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: Icon(Icons.close_rounded, color: theme.appBarTheme.titleTextStyle?.color),
-        ),
+        automaticallyImplyLeading: !widget.isFirstHabit,
+        leading: widget.isFirstHabit
+            ? null
+            : IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: Icon(Icons.close_rounded, color: theme.appBarTheme.titleTextStyle?.color),
+              ),
         actions: [
           TextButton(
             onPressed: () async {
@@ -86,24 +91,30 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                   await _databaseService.addHabit(habit);
                 }
 
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(isEditing ? 'Habit updated successfully' : 'Habit created successfully'),
-                      duration: const Duration(seconds: 2),
-                    ),
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(isEditing ? 'Habit updated successfully' : 'Habit created successfully'),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+                if (widget.isFirstHabit) {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (_) => const MainNavigation()),
+                    (route) => false,
                   );
+                } else {
                   Navigator.pop(context);
                 }
               } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Error: ${e.toString()}'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error: ${e.toString()}'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
               }
             },
             child: Text(
@@ -289,7 +300,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.primary.withOpacity(0.1) : (isDark ? AppColors.darkSurface : AppColors.primaryLighter),
+              color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : (isDark ? AppColors.darkSurface : AppColors.primaryLighter),
               borderRadius: BorderRadius.circular(16),
               border: isSelected ? Border.all(color: AppColors.primary, width: 2) : null,
             ),
