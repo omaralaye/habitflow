@@ -38,15 +38,44 @@ class HabitListScreen extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           final habits = snapshot.data ?? [];
-          return ListView(
+          if (habits.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.list_alt_rounded, size: 64, color: isDark ? AppColors.darkSurface : AppColors.primaryLighter),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No habits found.',
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Start your journey by adding one!',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDark ? AppColors.darkTextSecondary.withOpacity(0.7) : AppColors.textGrey.withOpacity(0.7),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          final categories = habits.map((h) => h.category).toSet().toList()..sort();
+
+          return ListView.separated(
             padding: const EdgeInsets.all(24),
-            children: [
-              _buildCategorySection(context, 'Mindfulness', habits.where((h) => h.category == 'Mindfulness').toList()),
-              const SizedBox(height: 24),
-              _buildCategorySection(context, 'Health', habits.where((h) => h.category == 'Health').toList()),
-              const SizedBox(height: 24),
-              _buildCategorySection(context, 'Learning', habits.where((h) => h.category == 'Learning').toList()),
-            ],
+            itemCount: categories.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 24),
+            itemBuilder: (context, index) {
+              final category = categories[index];
+              final categoryHabits = habits.where((h) => h.category == category).toList();
+              return _buildCategorySection(context, category, categoryHabits);
+            },
           );
         },
       ),
