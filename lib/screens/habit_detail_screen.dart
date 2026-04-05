@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 import '../services/theme_service.dart';
-import '../services/mock_data_service.dart';
+import '../services/database_service.dart';
 import '../models/habit_model.dart';
 import 'add_habit_screen.dart';
 
@@ -49,6 +49,35 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
               });
             },
             icon: const Icon(Icons.edit_rounded, color: AppColors.primary),
+          ),
+          IconButton(
+            onPressed: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Delete Habit'),
+                  content: const Text('Are you sure you want to delete this habit?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                    ),
+                  ],
+                ),
+              );
+
+              if (confirm == true) {
+                await DatabaseService().deleteHabit(widget.habit.id);
+                if (mounted) {
+                  Navigator.pop(context);
+                }
+              }
+            },
+            icon: const Icon(Icons.delete_outline_rounded, color: Colors.red),
           ),
           const SizedBox(width: 8),
         ],
@@ -99,25 +128,31 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
     final theme = Theme.of(context);
     final isDark = ThemeService().isDarkMode;
 
-    return SingleChildScrollView(
+    return StreamBuilder<List<HabitModel>>(
+      stream: DatabaseService().habitsStream,
+      builder: (context, snapshot) {
+        final habits = snapshot.data ?? [];
+        final habit = habits.firstWhere((h) => h.id == widget.habit.id, orElse: () => widget.habit);
+
+        return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: isDark ? theme.cardTheme.color : MockDataService.getPastelColorForMascot(widget.habit.mascot),
+              color: isDark ? theme.cardTheme.color : HabitModel.getPastelColorForMascot(widget.habit.mascot),
               borderRadius: BorderRadius.circular(32),
             ),
             child: Column(
               children: [
                 Text(
-                  MockDataService.mascotToEmoji(widget.habit.mascot),
+                  HabitModel.mascotToEmoji(habit.mascot),
                   style: const TextStyle(fontSize: 120),
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  '${widget.habit.mascot.name.toUpperCase()} LVL ${widget.habit.mascotLevel}',
+                  '${habit.mascot.name.toUpperCase()} LVL ${habit.mascotLevel}',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -131,9 +166,11 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
             ),
           ),
           const SizedBox(height: 32),
-          _buildMascotStatus(),
+          _buildMascotStatus(habit),
         ],
       ),
+    );
+      },
     );
   }
 
@@ -189,7 +226,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
     );
   }
 
-  Widget _buildMascotStatus() {
+  Widget _buildMascotStatus(HabitModel habit) {
     final isDark = ThemeService().isDarkMode;
     final theme = Theme.of(context);
 
@@ -205,7 +242,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
           const SizedBox(width: 16),
           Expanded(
             child: Text(
-              'Your ${widget.habit.mascot.name.toLowerCase()} is feeling energized today because of your consistent ${widget.habit.name.toLowerCase()} practice!',
+              'Your ${habit.mascot.name.toLowerCase()} is feeling energized today because of your consistent ${habit.name.toLowerCase()} practice!',
               style: TextStyle(
                 fontSize: 14,
                 color: theme.colorScheme.onSurface,
@@ -221,13 +258,19 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
   Widget _buildStreaksTab() {
     final theme = Theme.of(context);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildStreakSummary(),
-          const SizedBox(height: 24),
+    return StreamBuilder<List<HabitModel>>(
+      stream: DatabaseService().habitsStream,
+      builder: (context, snapshot) {
+        final habits = snapshot.data ?? [];
+        final habit = habits.firstWhere((h) => h.id == widget.habit.id, orElse: () => widget.habit);
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildStreakSummary(habit),
+              const SizedBox(height: 24),
           Text(
             'Weekly History',
             style: TextStyle(
@@ -237,15 +280,17 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
             ),
           ),
           const SizedBox(height: 16),
-          _buildWeeklyHistory(),
-          const SizedBox(height: 24),
-          _buildBestStreaks(),
-        ],
-      ),
+              _buildWeeklyHistory(),
+              const SizedBox(height: 24),
+              _buildBestStreaks(habit),
+            ],
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildStreakSummary() {
+  Widget _buildStreakSummary(HabitModel habit) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -255,7 +300,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildStreakStat('Current', '${widget.habit.streak}', 'days'),
+          _buildStreakStat('Current', '${habit.streak}', 'days'),
           Container(width: 1, height: 40, color: Colors.white24),
           _buildStreakStat('Best', '28', 'days'),
           Container(width: 1, height: 40, color: Colors.white24),
@@ -333,7 +378,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
     );
   }
 
-  Widget _buildBestStreaks() {
+  Widget _buildBestStreaks(HabitModel habit) {
     final theme = Theme.of(context);
     final isDark = ThemeService().isDarkMode;
 
@@ -361,7 +406,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Your longest ${widget.habit.name.toLowerCase()} streak was 28 days back in July.',
+                  'Your longest ${habit.name.toLowerCase()} streak was 28 days back in July.',
                   style: TextStyle(fontSize: 13, color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
                 ),
               ],

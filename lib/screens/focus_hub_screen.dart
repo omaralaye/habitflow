@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import '../services/mock_data_service.dart';
 import '../utils/constants.dart';
 import '../services/theme_service.dart';
-import '../services/mock_data_service.dart';
+import '../services/database_service.dart';
 import '../models/habit_model.dart';
 import '../models/music_model.dart';
 
@@ -21,16 +22,23 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
   @override
   void initState() {
     super.initState();
-    if (MockDataService.habits.isNotEmpty) {
-      _selectedHabit = MockDataService.habits.first;
-      if (_selectedHabit!.musicId != null) {
-        _selectedMusic = MockDataService.musicTracks.firstWhere(
-          (m) => m.id == _selectedHabit!.musicId,
-          orElse: () => MockDataService.musicTracks.first,
-        );
-      } else {
-        _selectedMusic = MockDataService.musicTracks.first;
-      }
+    _loadInitialHabit();
+  }
+
+  Future<void> _loadInitialHabit() async {
+    final habits = await DatabaseService().habitsStream.first;
+    if (habits.isNotEmpty && mounted) {
+      setState(() {
+        _selectedHabit = habits.first;
+        if (_selectedHabit!.musicId != null) {
+          _selectedMusic = MockDataService.musicTracks.firstWhere(
+            (m) => m.id == _selectedHabit!.musicId,
+            orElse: () => MockDataService.musicTracks.first,
+          );
+        } else {
+          _selectedMusic = MockDataService.musicTracks.first;
+        }
+      });
     }
   }
 
@@ -177,7 +185,7 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
                 children: [
                   Text(
                     _selectedHabit != null
-                        ? MockDataService.mascotToEmoji(_selectedHabit!.mascot)
+                        ? HabitModel.mascotToEmoji(_selectedHabit!.mascot)
                         : '🧘',
                     style: const TextStyle(fontSize: 80),
                   ),
@@ -241,58 +249,64 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
   Widget _buildHabitSelector() {
     final theme = Theme.of(context);
 
-    return SizedBox(
-      height: 100,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: MockDataService.habits.length,
-        itemBuilder: (context, index) {
-          final habit = MockDataService.habits[index];
-          final isSelected = _selectedHabit?.id == habit.id;
-          return GestureDetector(
-            onTap: () {
-              setState(() {
-                _selectedHabit = habit;
-                if (habit.musicId != null) {
-                  _selectedMusic = MockDataService.musicTracks.firstWhere(
-                    (m) => m.id == habit.musicId,
-                    orElse: () => _selectedMusic!,
-                  );
-                }
-              });
+    return StreamBuilder<List<HabitModel>>(
+      stream: DatabaseService().habitsStream,
+      builder: (context, snapshot) {
+        final habits = snapshot.data ?? [];
+        return SizedBox(
+          height: 100,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: habits.length,
+            itemBuilder: (context, index) {
+              final habit = habits[index];
+              final isSelected = _selectedHabit?.id == habit.id;
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedHabit = habit;
+                    if (habit.musicId != null) {
+                      _selectedMusic = MockDataService.musicTracks.firstWhere(
+                        (m) => m.id == habit.musicId,
+                        orElse: () => _selectedMusic!,
+                      );
+                    }
+                  });
+                },
+                child: Container(
+                  width: 80,
+                  margin: const EdgeInsets.only(right: 16),
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppColors.primary : theme.cardTheme.color,
+                    borderRadius: BorderRadius.circular(24),
+                    border: isSelected ? Border.all(color: AppColors.primary, width: 2) : null,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        HabitModel.mascotToEmoji(habit.mascot),
+                        style: const TextStyle(fontSize: 32),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        habit.name,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: isSelected ? Colors.white : theme.colorScheme.onSurface,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              );
             },
-            child: Container(
-              width: 80,
-              margin: const EdgeInsets.only(right: 16),
-              decoration: BoxDecoration(
-                color: isSelected ? AppColors.primary : theme.cardTheme.color,
-                borderRadius: BorderRadius.circular(24),
-                border: isSelected ? Border.all(color: AppColors.primary, width: 2) : null,
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    MockDataService.mascotToEmoji(habit.mascot),
-                    style: const TextStyle(fontSize: 32),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    habit.name,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: isSelected ? Colors.white : theme.colorScheme.onSurface,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 

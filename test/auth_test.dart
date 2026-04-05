@@ -3,8 +3,24 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:habitflow/screens/login_screen.dart';
 import 'package:habitflow/screens/signup_screen.dart';
 import 'package:habitflow/widgets/main_navigation.dart';
+import 'package:habitflow/services/auth_service.dart';
+import 'package:mocktail/mocktail.dart';
+
+class MockAuthService extends Mock implements AuthService {}
 
 void main() {
+  late MockAuthService mockAuthService;
+
+  setUp(() {
+    mockAuthService = MockAuthService();
+    AuthService.setMockInstance(mockAuthService);
+
+    // Default mock behaviors
+    when(() => mockAuthService.signIn(any(), any())).thenAnswer((_) async {});
+    when(() => mockAuthService.signUp(any(), any(), name: any(named: 'name'), emoji: any(named: 'emoji')))
+        .thenAnswer((_) async {});
+  });
+
   group('LoginScreen Tests', () {
     testWidgets('LoginScreen shows form fields and buttons', (WidgetTester tester) async {
       await tester.pumpWidget(const MaterialApp(home: LoginScreen()));
@@ -37,6 +53,7 @@ void main() {
       await tester.tap(find.text('Log In'));
       await tester.pumpAndSettle();
 
+      verify(() => mockAuthService.signIn('test@example.com', 'password123')).called(1);
       expect(find.byType(MainNavigation), findsOneWidget);
     });
   });
@@ -77,6 +94,12 @@ void main() {
       await tester.tap(find.text('Sign Up'));
       await tester.pumpAndSettle();
 
+      verify(() => mockAuthService.signUp(
+        'test@example.com',
+        'password123',
+        name: 'John Doe',
+        emoji: any(named: 'emoji')
+      )).called(1);
       expect(find.byType(MainNavigation), findsOneWidget);
     });
   });
