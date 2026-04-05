@@ -3,6 +3,7 @@ import '../services/mock_data_service.dart';
 import '../utils/constants.dart';
 import '../services/theme_service.dart';
 import '../services/database_service.dart';
+import '../services/ai_service.dart';
 import '../models/habit_model.dart';
 import '../widgets/main_navigation.dart';
 
@@ -24,6 +25,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
 
   final List<String> _categories = ['Mindfulness', 'Health', 'Learning', 'Productivity', 'General'];
   final DatabaseService _databaseService = DatabaseService();
+  bool _isRefining = false;
 
   @override
   void initState() {
@@ -40,6 +42,24 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
   void dispose() {
     _nameController.dispose();
     super.dispose();
+  }
+
+  Future<void> _refineHabitName() async {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) return;
+
+    setState(() => _isRefining = true);
+    try {
+      final refinedName = await AIService().refineHabit(name);
+      if (mounted) {
+        setState(() {
+          _nameController.text = refinedName;
+          _isRefining = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isRefining = false);
+    }
   }
 
   @override
@@ -155,6 +175,17 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                   borderSide: BorderSide.none,
                 ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                suffixIcon: IconButton(
+                  onPressed: _isRefining ? null : _refineHabitName,
+                  icon: _isRefining
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                        )
+                      : const Icon(Icons.auto_fix_high_rounded, color: AppColors.primary),
+                  tooltip: 'Refine with AI',
+                ),
               ),
             ),
             const SizedBox(height: 32),

@@ -3,6 +3,7 @@ import '../services/mock_data_service.dart';
 import '../utils/constants.dart';
 import '../services/theme_service.dart';
 import '../services/database_service.dart';
+import '../services/ai_service.dart';
 import '../models/habit_model.dart';
 import '../models/music_model.dart';
 
@@ -18,6 +19,7 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
   MusicModel? _selectedMusic;
   bool _isFocusing = false;
   double _focusProgress = 0.0;
+  String? _pepTalk;
 
   @override
   void initState() {
@@ -42,15 +44,27 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
     }
   }
 
-  void _toggleFocus() {
+  void _toggleFocus() async {
+    final wasFocusing = _isFocusing;
     setState(() {
       _isFocusing = !_isFocusing;
       if (_isFocusing) {
         _focusProgress = 0.45; // Simulating some progress
+        _pepTalk = null;
       } else {
         _focusProgress = 0.0;
+        _pepTalk = null;
       }
     });
+
+    if (!wasFocusing && _selectedHabit != null) {
+      final talk = await AIService().getPepTalk(_selectedHabit!);
+      if (mounted && _isFocusing) {
+        setState(() {
+          _pepTalk = talk;
+        });
+      }
+    }
   }
 
   void _nextTrack() {
@@ -201,6 +215,12 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
                     ),
                 ],
               ),
+              if (_pepTalk != null && _isFocusing)
+                Positioned(
+                  top: -20,
+                  right: 0,
+                  child: _buildPepTalkBubble(),
+                ),
             ],
           ),
           const SizedBox(height: 32),
@@ -391,6 +411,33 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildPepTalkBubble() {
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 140),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Text(
+        _pepTalk!,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
+        textAlign: TextAlign.center,
+      ),
     );
   }
 
