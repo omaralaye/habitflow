@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 import '../services/theme_service.dart';
 import '../services/database_service.dart';
+import '../services/ai_service.dart';
 import '../models/habit_model.dart';
 import 'add_habit_screen.dart';
 
@@ -15,11 +16,13 @@ class HabitDetailScreen extends StatefulWidget {
 
 class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  Future<String>? _mascotWisdomFuture;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _mascotWisdomFuture = AIService().getMascotInsight(widget.habit);
   }
 
   @override
@@ -230,28 +233,109 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
     final isDark = ThemeService().isDarkMode;
     final theme = Theme.of(context);
 
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: isDark ? theme.cardTheme.color : AppColors.primaryLighter,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.auto_awesome_rounded, color: AppColors.primary),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              'Your ${habit.mascot.name.toLowerCase()} is feeling energized today because of your consistent ${habit.name.toLowerCase()} practice!',
-              style: TextStyle(
-                fontSize: 14,
-                color: theme.colorScheme.onSurface,
-                height: 1.4,
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: isDark ? theme.cardTheme.color : AppColors.primaryLighter,
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.auto_awesome_rounded, color: AppColors.primary),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  'Your ${habit.mascot.name.toLowerCase()} is feeling energized today because of your consistent ${habit.name.toLowerCase()} practice!',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: theme.colorScheme.onSurface,
+                    height: 1.4,
+                  ),
+                ),
               ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+        _buildMascotWisdom(habit),
+      ],
+    );
+  }
+
+  Widget _buildMascotWisdom(HabitModel habit) {
+    final isDark = ThemeService().isDarkMode;
+    final theme = Theme.of(context);
+
+    return FutureBuilder<String>(
+      future: _mascotWisdomFuture,
+      builder: (context, snapshot) {
+        final insight = snapshot.data ?? 'Reflecting on your journey...';
+        final isLoading = snapshot.connectionState == ConnectionState.waiting;
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: isDark
+                  ? [AppColors.darkSurface, AppColors.darkCard]
+                  : [AppColors.primary.withOpacity(0.1), AppColors.primaryLight.withOpacity(0.05)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: AppColors.primary.withOpacity(0.2),
+              width: 1,
             ),
           ),
-        ],
-      ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.psychology_rounded, color: AppColors.primary, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Mascot\'s Wisdom',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  const Spacer(),
+                  if (isLoading)
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                insight,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontStyle: FontStyle.italic,
+                  color: theme.colorScheme.onSurface.withOpacity(0.8),
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
