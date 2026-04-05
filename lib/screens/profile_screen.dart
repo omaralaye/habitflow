@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/constants.dart';
 import '../services/theme_service.dart';
 import 'settings_screen.dart';
@@ -46,12 +47,20 @@ class ProfileScreen extends StatelessWidget {
   Widget _buildProfileCard(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = ThemeService().isDarkMode;
+    final user = Supabase.instance.client.auth.currentUser;
 
-    // Use mock data for now
-    const String name = 'Alex Johnson';
-    const String emoji = '🦊';
+    return StreamBuilder<Map<String, dynamic>?>(
+      stream: Supabase.instance.client
+          .from('profiles')
+          .stream(primaryKey: ['id'])
+          .eq('id', user?.id ?? '')
+          .map((data) => data.isNotEmpty ? data.first : null),
+      builder: (context, snapshot) {
+        final profile = snapshot.data;
+        final String name = profile?['name'] ?? 'Alex Johnson';
+        final String emoji = profile?['emoji'] ?? '🦊';
 
-    return Container(
+        return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         color: theme.cardTheme.color,
@@ -103,6 +112,8 @@ class ProfileScreen extends StatelessWidget {
           _buildXPProgress(context),
         ],
       ),
+    );
+      },
     );
   }
 

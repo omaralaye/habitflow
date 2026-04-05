@@ -23,6 +23,30 @@ class HabitModel {
   final bool isCompletedToday;
   final String? musicId;
 
+  static String mascotToEmoji(MascotType type) {
+    switch (type) {
+      case MascotType.panda: return '🐼';
+      case MascotType.penguin: return '🐧';
+      case MascotType.koala: return '🐨';
+      case MascotType.fox: return '🦊';
+      case MascotType.cat: return '🐱';
+      case MascotType.dog: return '🐶';
+      case MascotType.bear: return '🐻';
+    }
+  }
+
+  static Color getPastelColorForMascot(MascotType type) {
+    switch (type) {
+      case MascotType.panda: return const Color(0xFFF3E5F5);
+      case MascotType.penguin: return const Color(0xFFE3F2FD);
+      case MascotType.koala: return const Color(0xFFE0F2F1);
+      case MascotType.fox: return const Color(0xFFFFF3E0);
+      case MascotType.cat: return const Color(0xFFFCE4EC);
+      case MascotType.dog: return const Color(0xFFF1F8E9);
+      case MascotType.bear: return const Color(0xFFEFEBE9);
+    }
+  }
+
   HabitModel({
     required this.id,
     required this.name,

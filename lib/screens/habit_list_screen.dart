@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 import '../services/theme_service.dart';
-import '../services/mock_data_service.dart';
+import '../services/database_service.dart';
 import '../models/habit_model.dart';
 import 'add_habit_screen.dart';
 import 'habit_detail_screen.dart';
@@ -31,15 +31,24 @@ class HabitListScreen extends StatelessWidget {
           const SizedBox(width: 8),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(24),
-        children: [
-          _buildCategorySection(context, 'Mindfulness', MockDataService.habits.where((h) => h.category == 'Mindfulness').toList()),
-          const SizedBox(height: 24),
-          _buildCategorySection(context, 'Health', MockDataService.habits.where((h) => h.category == 'Health').toList()),
-          const SizedBox(height: 24),
-          _buildCategorySection(context, 'Learning', MockDataService.habits.where((h) => h.category == 'Learning').toList()),
-        ],
+      body: StreamBuilder<List<HabitModel>>(
+        stream: DatabaseService().habitsStream,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final habits = snapshot.data ?? [];
+          return ListView(
+            padding: const EdgeInsets.all(24),
+            children: [
+              _buildCategorySection(context, 'Mindfulness', habits.where((h) => h.category == 'Mindfulness').toList()),
+              const SizedBox(height: 24),
+              _buildCategorySection(context, 'Health', habits.where((h) => h.category == 'Health').toList()),
+              const SizedBox(height: 24),
+              _buildCategorySection(context, 'Learning', habits.where((h) => h.category == 'Learning').toList()),
+            ],
+          );
+        },
       ),
     );
   }
@@ -98,12 +107,12 @@ class HabitListScreen extends StatelessWidget {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: isDark ? AppColors.darkSurface : MockDataService.getPastelColorForMascot(habit.mascot),
+                color: isDark ? AppColors.darkSurface : HabitModel.getPastelColorForMascot(habit.mascot),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Center(
                 child: Text(
-                  MockDataService.mascotToEmoji(habit.mascot),
+                  HabitModel.mascotToEmoji(habit.mascot),
                   style: const TextStyle(fontSize: 28),
                 ),
               ),

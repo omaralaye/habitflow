@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import '../services/mock_data_service.dart';
 import '../utils/constants.dart';
 import '../services/theme_service.dart';
-import '../services/mock_data_service.dart';
+import '../services/database_service.dart';
 import '../models/habit_model.dart';
 
 class AddHabitScreen extends StatefulWidget {
@@ -20,6 +21,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
   bool _isReminderEnabled = true;
 
   final List<String> _categories = ['Mindfulness', 'Health', 'Learning', 'Productivity', 'General'];
+  final DatabaseService _databaseService = DatabaseService();
 
   @override
   void initState() {
@@ -54,15 +56,55 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () {
-              // For now, just show a message since we're using mock data
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(isEditing ? 'Habit updated (mock data)' : 'Habit created (mock data)'),
-                  duration: const Duration(seconds: 2),
-                ),
+            onPressed: () async {
+              final String name = _nameController.text.trim();
+              if (name.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please enter a habit name')),
+                );
+                return;
+              }
+
+              final habit = HabitModel(
+                id: widget.habit?.id ?? '',
+                name: name,
+                color: HabitModel.getPastelColorForMascot(_selectedMascot),
+                streak: widget.habit?.streak ?? 0,
+                completedDays: widget.habit?.completedDays ?? [],
+                mascot: _selectedMascot,
+                mascotLevel: widget.habit?.mascotLevel ?? 1,
+                progress: widget.habit?.progress ?? 0,
+                category: _selectedCategory,
+                isCompletedToday: widget.habit?.isCompletedToday ?? false,
+                musicId: _selectedMusicId,
               );
-              Navigator.pop(context);
+
+              try {
+                if (isEditing) {
+                  await _databaseService.updateHabit(habit);
+                } else {
+                  await _databaseService.addHabit(habit);
+                }
+
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(isEditing ? 'Habit updated successfully' : 'Habit created successfully'),
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                  Navigator.pop(context);
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error: ${e.toString()}'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
             },
             child: Text(
               isEditing ? 'Save' : 'Create',
@@ -171,7 +213,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
             ),
             child: Center(
               child: Text(
-                MockDataService.mascotToEmoji(mascot),
+                HabitModel.mascotToEmoji(mascot),
                 style: const TextStyle(fontSize: 32),
               ),
             ),
