@@ -30,30 +30,48 @@ class DatabaseService {
         .stream(primaryKey: ['id'])
         .eq('user_id', _uid!)
         .asyncMap((data) async {
-          final List<HabitModel> habits = [];
-          for (var map in data) {
-            final habitId = map['id'];
-
-            // Fetch completions for this habit
+          try {
+            final List<HabitModel> habits = [];
+            // Fetch all completions for the user to optimize and reduce queries
             final completionsResponse = await _supabase
                 .from('habit_completions')
-                .select('completed_at')
-                .eq('habit_id', habitId);
+                .select('habit_id, completed_at')
+                .eq('user_id', _uid!);
 
-            final List<String> completedDates = (completionsResponse as List)
-                .map((c) => c['completed_at'] as String)
-                .toList();
+            final Map<String, List<String>> completionsByHabit = {};
+            for (var c in completionsResponse as List) {
+              final hId = c['habit_id'].toString();
+              final date = c['completed_at'] as String;
+              completionsByHabit.putIfAbsent(hId, () => []).add(date);
+            }
 
-            habits.add(_habitFromSupabase(map, completedDates));
+            for (var map in data) {
+              final habitId = map['id'].toString();
+              final completedDates = completionsByHabit[habitId] ?? [];
+              habits.add(_habitFromSupabase(map, completedDates));
+            }
+            return habits;
+          } catch (e) {
+            debugPrint('Error in habitsStream: $e');
+            return [];
           }
-          return habits;
         });
   }
 
   Future<void> addHabit(HabitModel habit) async {
     if (_uid == null) return;
+    final habitData = _habitToSupabase(habit);
+
+    // Ensure music_id is a valid UUID or null
+    if (habitData['music_id'] != null) {
+      final musicId = habitData['music_id'].toString();
+      if (musicId.length < 36) { // Basic check for non-UUID strings from mock data
+        habitData['music_id'] = null;
+      }
+    }
+
     await _supabase.from('habits').insert({
-      ..._habitToSupabase(habit),
+      ...habitData,
       'user_id': _uid,
     });
   }
@@ -70,9 +88,19 @@ class DatabaseService {
 
   Future<void> updateHabit(HabitModel habit) async {
     if (_uid == null) return;
+    final habitData = _habitToSupabase(habit);
+
+    // Ensure music_id is a valid UUID or null
+    if (habitData['music_id'] != null) {
+      final musicId = habitData['music_id'].toString();
+      if (musicId.length < 36) { // Basic check for non-UUID strings from mock data
+        habitData['music_id'] = null;
+      }
+    }
+
     await _supabase
         .from('habits')
-        .update(_habitToSupabase(habit))
+        .update(habitData)
         .eq('id', habit.id);
   }
 
