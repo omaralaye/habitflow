@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 import '../services/theme_service.dart';
-import '../services/auth_service.dart';
-import 'onboarding_screen.dart';
 import 'settings/quiet_hours_screen.dart';
 import 'settings/email_settings_screen.dart';
 import 'settings/security_settings_screen.dart';
@@ -315,15 +313,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       width: double.infinity,
       height: 60,
       child: ElevatedButton(
-        onPressed: () async {
-          await AuthService().signOut();
-          if (mounted) {
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (_) => const OnboardingScreen()),
-              (route) => false,
-            );
-          }
+        onPressed: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Sign out functionality not implemented yet')),
+          );
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: isDark ? AppColors.darkSurface : AppColors.primaryLighter.withOpacity(0.5),
