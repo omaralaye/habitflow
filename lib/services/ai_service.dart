@@ -1,16 +1,101 @@
 import 'dart:math';
+import 'package:openai_dart/openai_dart.dart';
 import '../models/habit_model.dart';
+import '../utils/constants.dart';
 
 class AIService {
   static final AIService _instance = AIService._internal();
   factory AIService() => _instance;
   AIService._internal();
 
-  /// Simulates refining a habit name into something more actionable and specific.
-  Future<String> refineHabit(String habitName) async {
-    // Simulating API delay
-    await Future.delayed(const Duration(milliseconds: 800));
+  final OpenAIClient _client = OpenAIClient(apiKey: OpenAIConstants.OPENAI_API_KEY);
 
+  /// Refines a habit name into something more actionable and specific using OpenAI.
+  Future<String> refineHabit(String habitName) async {
+    try {
+      final response = await _client.createChatCompletion(
+        request: CreateChatCompletionRequest(
+          model: ChatCompletionModel.modelId(OpenAIConstants.OPENAI_MODEL),
+          messages: [
+            const ChatCompletionMessage.system(
+              content: 'You are a habit coaching assistant. Your goal is to take a vague habit name and refine it into a specific, actionable, and measurable habit. Keep the output concise (less than 10 words).',
+            ),
+            ChatCompletionMessage.user(
+              content: ChatCompletionUserMessageContent.string('Refine this habit: $habitName'),
+            ),
+          ],
+          temperature: 0.7,
+          maxTokens: 30,
+        ),
+      );
+
+      final refinedName = response.choices.first.message.content?.trim();
+      return refinedName ?? habitName;
+    } catch (e) {
+      // Fallback to mock logic if API fails or key is placeholder
+      return _mockRefineHabit(habitName);
+    }
+  }
+
+  /// Generates a personalized insight from the mascot based on its personality using OpenAI.
+  Future<String> getMascotInsight(HabitModel habit) async {
+    final personality = _mascotPersonalities[habit.mascot] ?? 'helpful';
+
+    try {
+      final response = await _client.createChatCompletion(
+        request: CreateChatCompletionRequest(
+          model: ChatCompletionModel.modelId(OpenAIConstants.OPENAI_MODEL),
+          messages: [
+            ChatCompletionMessage.system(
+              content: 'You are a mascot for a habit tracking app. Your personality is: $personality. Provide a short, encouraging insight (1-2 sentences) to the user about their habit: ${habit.name}.',
+            ),
+            const ChatCompletionMessage.user(
+              content: ChatCompletionUserMessageContent.string('Give me an insight about my habit.'),
+            ),
+          ],
+          temperature: 0.8,
+          maxTokens: 60,
+        ),
+      );
+
+      final insight = response.choices.first.message.content?.trim();
+      return insight ?? _mockGetMascotInsight(habit);
+    } catch (e) {
+      return _mockGetMascotInsight(habit);
+    }
+  }
+
+  /// Generates a quick pep talk for the focus session using OpenAI.
+  Future<String> getPepTalk(HabitModel habit) async {
+    final personality = _mascotPersonalities[habit.mascot] ?? 'helpful';
+
+    try {
+      final response = await _client.createChatCompletion(
+        request: CreateChatCompletionRequest(
+          model: ChatCompletionModel.modelId(OpenAIConstants.OPENAI_MODEL),
+          messages: [
+            ChatCompletionMessage.system(
+              content: 'You are a mascot for a habit tracking app. Your personality is: $personality. Give a very short (max 10 words) pep talk for a focus session on the habit: ${habit.name}.',
+            ),
+            const ChatCompletionMessage.user(
+              content: ChatCompletionUserMessageContent.string('Give me a quick pep talk!'),
+            ),
+          ],
+          temperature: 0.9,
+          maxTokens: 30,
+        ),
+      );
+
+      final pepTalk = response.choices.first.message.content?.trim();
+      return pepTalk ?? _mockGetPepTalk(habit);
+    } catch (e) {
+      return _mockGetPepTalk(habit);
+    }
+  }
+
+  // --- Mock Fallbacks (original logic) ---
+
+  String _mockRefineHabit(String habitName) {
     final lowerName = habitName.toLowerCase();
     if (lowerName.contains('read')) {
       return 'Read 10 pages of a non-fiction book';
@@ -27,21 +112,27 @@ class AIService {
     }
   }
 
-  /// Generates a personalized insight from the mascot based on its personality.
-  Future<String> getMascotInsight(HabitModel habit) async {
-    await Future.delayed(const Duration(milliseconds: 600));
-
+  String _mockGetMascotInsight(HabitModel habit) {
     final random = Random();
     final insights = _mascotInsights[habit.mascot] ?? ['You\'re doing great! Keep it up!'];
     return insights[random.nextInt(insights.length)].replaceAll('{habit}', habit.name.toLowerCase());
   }
 
-  /// Generates a quick pep talk for the focus session.
-  Future<String> getPepTalk(HabitModel habit) async {
+  String _mockGetPepTalk(HabitModel habit) {
     final random = Random();
     final talks = _mascotPepTalks[habit.mascot] ?? ['Let\'s stay focused together!'];
     return talks[random.nextInt(talks.length)];
   }
+
+  final Map<MascotType, String> _mascotPersonalities = {
+    MascotType.panda: 'Zen, mindful, patient, and calm.',
+    MascotType.penguin: 'Disciplined, consistent, social, and precise.',
+    MascotType.koala: 'Relaxed, focused on rest and recharge, steady.',
+    MascotType.fox: 'Strategic, clever, efficient, and adaptable.',
+    MascotType.cat: 'Independent, curious, agile, and compassionate.',
+    MascotType.dog: 'Enthusiastic, loyal, energetic, and encouraging.',
+    MascotType.bear: 'Strong, protective, disciplined, and powerful.',
+  };
 
   final Map<MascotType, List<String>> _mascotInsights = {
     MascotType.panda: [
