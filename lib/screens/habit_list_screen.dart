@@ -37,6 +37,14 @@ class HabitListScreen extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
+          if (snapshot.hasError) {
+            return Center(
+              child: Text(
+                'Something went wrong. Please try again.',
+                style: TextStyle(color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
+              ),
+            );
+          }
           final habits = snapshot.data ?? [];
           if (habits.isEmpty) {
             return Center(

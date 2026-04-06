@@ -207,6 +207,14 @@ class HomeScreen extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Failed to load habits.',
+              style: TextStyle(color: ThemeService().isDarkMode ? AppColors.darkTextSecondary : AppColors.textGrey),
+            ),
+          );
+        }
         final habits = snapshot.data ?? [];
         if (habits.isEmpty) {
           return Center(
