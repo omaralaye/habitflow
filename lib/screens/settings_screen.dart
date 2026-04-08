@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 import '../services/theme_service.dart';
+import '../services/auth_service.dart';
+import 'onboarding_screen.dart';
 import 'settings/quiet_hours_screen.dart';
 import 'settings/email_settings_screen.dart';
 import 'settings/security_settings_screen.dart';
@@ -307,17 +309,52 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  Future<void> _handleSignOut() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Sign Out'),
+        content: const Text('Are you sure you want to sign out of your sanctuary?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel', style: TextStyle(color: AppColors.textGrey)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Sign Out', style: TextStyle(color: AppColors.accentRed, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      try {
+        await AuthService().signOut();
+        if (mounted) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+            (route) => false,
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error signing out: $e')),
+          );
+        }
+      }
+    }
+  }
+
   Widget _buildSignOutButton(BuildContext context) {
     final isDark = ThemeService().isDarkMode;
     return SizedBox(
       width: double.infinity,
       height: 60,
       child: ElevatedButton(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Sign out functionality not implemented yet')),
-          );
-        },
+        onPressed: _handleSignOut,
         style: ElevatedButton.styleFrom(
           backgroundColor: isDark ? AppColors.darkSurface : AppColors.primaryLighter.withOpacity(0.5),
           foregroundColor: AppColors.accentRed,
