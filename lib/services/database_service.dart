@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/habit_model.dart';
+import '../models/music_model.dart';
 
 class DatabaseService {
   static DatabaseService? _instance;
@@ -187,6 +188,17 @@ class DatabaseService {
   Future<List<Map<String, dynamic>>> getAllMilestones() async {
     final response = await _supabase.from('milestones').select();
     return List<Map<String, dynamic>>.from(response);
+  }
+
+  Future<List<MusicModel>> getMusicTracks() async {
+    final response = await _supabase.from('music').select();
+    return (response as List).map((m) => MusicModel(
+      id: m['id'].toString(),
+      title: m['title'] ?? 'Unknown Title',
+      artist: m['artist'] ?? 'Unknown Artist',
+      category: m['category'] ?? 'General',
+      duration: m['duration'] ?? '0:00',
+    )).toList();
   }
 
   Stream<Map<String, dynamic>> get statsStream {
