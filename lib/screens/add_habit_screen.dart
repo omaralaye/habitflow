@@ -319,7 +319,13 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
         }
 
         final allMusic = snapshot.data ?? [];
-        final musicTracks = allMusic.where((track) => track.category == _selectedCategory).toList();
+        var musicTracks = allMusic.where((track) => track.category == _selectedCategory).toList();
+        bool isFallback = false;
+
+        if (musicTracks.isEmpty && _selectedCategory != 'General') {
+          musicTracks = allMusic.where((track) => track.category == 'General').toList();
+          isFallback = true;
+        }
 
         if (musicTracks.isEmpty) {
           return Container(
@@ -329,18 +335,41 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
               borderRadius: BorderRadius.circular(16),
             ),
             child: Text(
-              'No music tracks available for this category.',
+              'No music tracks available at the moment.',
               style: TextStyle(color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
             ),
           );
         }
 
-        return ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: musicTracks.length,
-          separatorBuilder: (context, index) => const SizedBox(height: 8),
-          itemBuilder: (context, index) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (isFallback)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12.0, left: 4.0),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline, size: 16, color: AppColors.secondary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'No tracks found for $_selectedCategory. Showing general tracks.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontStyle: FontStyle.italic,
+                          color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: musicTracks.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 8),
+              itemBuilder: (context, index) {
             final track = musicTracks[index];
             final isSelected = track.id == _selectedMusicId;
             return GestureDetector(
@@ -385,7 +414,9 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                 ),
               ),
             );
-          },
+              },
+            ),
+          ],
         );
       },
     );
