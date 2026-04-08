@@ -29,28 +29,44 @@ class MusicService {
               }
             }
 
-            String category = 'General';
-            if (track['categories'] is List && (track['categories'] as List).isNotEmpty) {
-              final firstCatEntry = track['categories'][0];
-              if (firstCatEntry is List && firstCatEntry.length > 1) {
-                category = firstCatEntry[1]['name'] ?? 'General';
+            // Collect all category names and tags
+            final List<String> apiCategories = [];
+            if (track['categories'] is List) {
+              for (var entry in track['categories']) {
+                if (entry is List && entry.length > 1 && entry[1] is Map) {
+                  final name = entry[1]['name'];
+                  if (name != null) apiCategories.add(name.toString().toLowerCase());
+                }
+              }
+            }
+            if (track['genre'] != null) {
+              apiCategories.add(track['genre'].toString().toLowerCase());
+            }
+            if (track['tags'] is List) {
+              for (var tag in track['tags']) {
+                if (tag is String) apiCategories.add(tag.toLowerCase());
+                else if (tag is List && tag.length > 1 && tag[1] is String) {
+                   apiCategories.add(tag[1].toLowerCase());
+                }
               }
             }
 
-            // Map API categories to app categories
-            final String lowerCat = category.toLowerCase();
-            if (lowerCat.contains('meditative') || lowerCat.contains('calm') || lowerCat.contains('peaceful') || lowerCat.contains('relaxing')) {
+            String category = 'General';
+
+            bool matches(List<String> keywords) {
+              return apiCategories.any((cat) => keywords.any((kw) => cat.contains(kw)));
+            }
+
+            if (matches(['meditative', 'calm', 'peaceful', 'relaxing', 'ambient', 'zen', 'yoga', 'spiritual', 'new age'])) {
               category = 'Mindfulness';
-            } else if (lowerCat.contains('workout') || lowerCat.contains('sports') || lowerCat.contains('energetic')) {
-              category = 'Workout';
-            } else if (lowerCat.contains('lofi') || lowerCat.contains('study') || lowerCat.contains('ambient')) {
+            } else if (matches(['lofi', 'study', 'chill', 'soft', 'piano', 'classical', 'instrumental'])) {
               category = 'Studying';
-            } else if (lowerCat.contains('corporate') || lowerCat.contains('inspiring') || lowerCat.contains('technology')) {
+            } else if (matches(['workout', 'sports', 'energetic', 'rock', 'trap', 'hip hop', 'dance', 'electronic', 'house', 'upbeat'])) {
+              category = 'Workout';
+            } else if (matches(['corporate', 'inspiring', 'technology', 'advertising', 'uplifting', 'modern', 'motivational', 'productivity'])) {
               category = 'Productivity';
-            } else if (lowerCat.contains('nature') || lowerCat.contains('vlog')) {
+            } else if (matches(['nature', 'vlog', 'acoustic', 'folk', 'country', 'travel', 'health'])) {
               category = 'Health';
-            } else {
-              category = 'General';
             }
 
             final int durationSeconds = track['duration'] ?? 0;
