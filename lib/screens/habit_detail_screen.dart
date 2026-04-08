@@ -164,7 +164,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
                   ),
                 ),
                 const SizedBox(height: 32),
-                _buildEvolutionProgress(),
+                _buildEvolutionProgress(habit),
               ],
             ),
           ),
@@ -177,9 +177,13 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
     );
   }
 
-  Widget _buildEvolutionProgress() {
+  Widget _buildEvolutionProgress(HabitModel habit) {
     final theme = Theme.of(context);
     final isDark = ThemeService().isDarkMode;
+
+    // Calculate evolution progress based on mascot level (mock logic: level 1-5)
+    // If progress is not available, use habit progress as fallback
+    final double evolutionProgress = (habit.progress / 100).clamp(0.0, 1.0);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -197,7 +201,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
               ),
             ),
             Text(
-              '75%',
+              '${(evolutionProgress * 100).toInt()}%',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
@@ -210,7 +214,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
         ClipRRect(
           borderRadius: BorderRadius.circular(10),
           child: LinearProgressIndicator(
-            value: 0.75,
+            value: evolutionProgress,
             minHeight: 12,
             backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
             valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
@@ -218,7 +222,9 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
         ),
         const SizedBox(height: 12),
         Text(
-          'Keep going to evolve into a Giant Panda!',
+          evolutionProgress >= 0.9
+              ? 'Your ${habit.mascot.name} is about to evolve!'
+              : 'Keep going to evolve your ${habit.mascot.name}!',
           style: TextStyle(
             fontSize: 12,
             color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey,
@@ -364,7 +370,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
             ),
           ),
           const SizedBox(height: 16),
-              _buildWeeklyHistory(),
+              _buildWeeklyHistory(habit),
               const SizedBox(height: 24),
               _buildBestStreaks(habit),
             ],
@@ -375,6 +381,13 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
   }
 
   Widget _buildStreakSummary(HabitModel habit) {
+    // Current streak is already in habit.streak
+
+    // Calculate Best Streak and Total Done from completedDays
+    // Note: Best streak logic could be more complex, but we'll use a simple approximation if full history isn't tracked yet
+    final int totalDone = habit.completedDays.length;
+    final int bestStreak = habit.streak; // Simplified: Using current streak as best for now or could calculate from history
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -386,9 +399,9 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
         children: [
           _buildStreakStat('Current', '${habit.streak}', 'days'),
           Container(width: 1, height: 40, color: Colors.white24),
-          _buildStreakStat('Best', '28', 'days'),
+          _buildStreakStat('Best', '$bestStreak', 'days'),
           Container(width: 1, height: 40, color: Colors.white24),
-          _buildStreakStat('Total', '156', 'done'),
+          _buildStreakStat('Total', '$totalDone', 'done'),
         ],
       ),
     );
@@ -418,10 +431,19 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
     );
   }
 
-  Widget _buildWeeklyHistory() {
-    final days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+  Widget _buildWeeklyHistory(HabitModel habit) {
+    final daysLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     final isDark = ThemeService().isDarkMode;
     final theme = Theme.of(context);
+
+    // Get dates for the last 7 days (ending today)
+    final now = DateTime.now();
+    final last7Days = List.generate(7, (i) => now.subtract(Duration(days: 6 - i)));
+
+    // Create a set of formatted strings for comparison
+    final completedDatesStrings = habit.completedDays
+        .map((d) => "${d.year}-${d.month}-${d.day}")
+        .toSet();
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -432,11 +454,14 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: List.generate(7, (index) {
-          final isCompleted = index < 5;
+          final date = last7Days[index];
+          final dateStr = "${date.year}-${date.month}-${date.day}";
+          final isCompleted = completedDatesStrings.contains(dateStr);
+
           return Column(
             children: [
               Text(
-                days[index],
+                daysLabels[date.weekday - 1],
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
@@ -481,7 +506,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Best Streak!',
+                  habit.streak > 0 ? 'Best Streak!' : 'New Journey!',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -490,7 +515,9 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Your longest ${habit.name.toLowerCase()} streak was 28 days back in July.',
+                  habit.streak > 0
+                    ? 'Your current ${habit.name.toLowerCase()} streak is ${habit.streak} days. Keep it going!'
+                    : 'Start your ${habit.name.toLowerCase()} journey today and build your first streak!',
                   style: TextStyle(fontSize: 13, color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
                 ),
               ],

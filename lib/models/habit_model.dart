@@ -15,7 +15,7 @@ class HabitModel {
   final String name;
   final Color color;
   final int streak;
-  final List<int> completedDays;
+  final List<DateTime> completedDays;
   final MascotType mascot;
   final int mascotLevel;
   final int progress; // percentage 0-100
@@ -66,7 +66,7 @@ class HabitModel {
     String? name,
     Color? color,
     int? streak,
-    List<int>? completedDays,
+    List<DateTime>? completedDays,
     MascotType? mascot,
     int? mascotLevel,
     int? progress,

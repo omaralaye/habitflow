@@ -270,7 +270,7 @@ class DatabaseService {
       name: data['name'] ?? '',
       color: _colorFromHex(data['color'] ?? '#006D77'),
       streak: data['streak'] ?? 0,
-      completedDays: completedDates.map((d) => DateTime.parse(d).day).toList(),
+      completedDays: completedDates.map((d) => DateTime.parse(d)).toList(),
       mascot: MascotType.values.byName(data['mascot'] ?? 'panda'),
       mascotLevel: (data['mascot_level'] as num?)?.toInt() ?? 1,
       progress: progress,
