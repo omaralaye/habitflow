@@ -45,14 +45,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            _buildProfileCard(context),
-            const SizedBox(height: 24),
-            _buildMilestones(context),
-            const SizedBox(height: 24),
-            _buildGlobalRank(context),
-          ],
+        child: StreamBuilder<Map<String, dynamic>>(
+          stream: DatabaseService().profileStream,
+          builder: (context, profileSnapshot) {
+            final profile = profileSnapshot.data;
+            final int level = profile?['level'] ?? 1;
+            final int xp = profile?['xp'] ?? 0;
+
+            return Column(
+              children: [
+                _buildProfileCard(context),
+                const SizedBox(height: 24),
+                _buildMilestones(context),
+                const SizedBox(height: 24),
+                _buildGlobalRank(context, level, xp),
+              ],
+            );
+          }
         ),
       ),
     );
@@ -291,8 +300,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildGlobalRank(BuildContext context) {
+  Widget _buildGlobalRank(BuildContext context, int level, int xp) {
     final theme = Theme.of(context);
+
+    // Mock rank calculation based on level and XP
+    final int rank = 10000 - (level * 100 + xp ~/ 5);
+    final String percentage = (100 - (level * 2 + xp / 500)).clamp(1, 99).toStringAsFixed(1);
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -322,17 +335,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Row(
             children: [
               Container(
-                width: 60,
+                width: 70,
                 height: 60,
                 decoration: BoxDecoration(
                   color: AppColors.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Center(
+                child: Center(
                   child: Text(
-                    '#247',
-                    style: TextStyle(
-                      fontSize: 18,
+                    '#$rank',
+                    style: const TextStyle(
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: AppColors.primary,
                     ),
@@ -345,7 +358,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Top 5% of Habit Masters',
+                      'Top $percentage% of Habit Masters',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
