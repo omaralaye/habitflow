@@ -2,10 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/constants.dart';
 import '../services/theme_service.dart';
+import '../services/database_service.dart';
 import 'settings_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  late Future<List<Map<String, dynamic>>> _allMilestonesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _allMilestonesFuture = DatabaseService().getAllMilestones();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,18 +61,15 @@ class ProfileScreen extends StatelessWidget {
   Widget _buildProfileCard(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = ThemeService().isDarkMode;
-    final user = Supabase.instance.client.auth.currentUser;
 
-    return StreamBuilder<Map<String, dynamic>?>(
-      stream: Supabase.instance.client
-          .from('profiles')
-          .stream(primaryKey: ['id'])
-          .eq('id', user?.id ?? '')
-          .map((data) => data.isNotEmpty ? data.first : null),
+    return StreamBuilder<Map<String, dynamic>>(
+      stream: DatabaseService().profileStream,
       builder: (context, snapshot) {
         final profile = snapshot.data;
         final String name = profile?['name'] ?? 'Alex Johnson';
         final String emoji = profile?['emoji'] ?? '🦊';
+        final int level = profile?['level'] ?? 1;
+        final int xp = profile?['xp'] ?? 0;
 
         return Container(
       padding: const EdgeInsets.all(32),
@@ -100,16 +111,16 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Level 24 Habit Master',
-            style: TextStyle(
+          Text(
+            'Level $level Habit Master',
+            style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: AppColors.primary,
             ),
           ),
           const SizedBox(height: 32),
-          _buildXPProgress(context),
+          _buildXPProgress(context, xp, level),
         ],
       ),
     );
@@ -117,7 +128,10 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildXPProgress(BuildContext context) {
+  Widget _buildXPProgress(BuildContext context, int xp, int level) {
+    final nextLevelXp = level * 500;
+    final progress = xp / nextLevelXp;
+
     return Column(
       children: [
         Row(
@@ -132,8 +146,8 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
             Text(
-              '2,450 / 3,000 XP',
-              style: TextStyle(
+              '$xp / $nextLevelXp XP',
+              style: const TextStyle(
                 fontSize: 14,
                 color: AppColors.primary,
                 fontWeight: FontWeight.w600,
@@ -143,7 +157,7 @@ class ProfileScreen extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         LinearProgressIndicator(
-          value: 0.82,
+          value: progress,
           backgroundColor: AppColors.primaryLighter,
           valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
         ),
@@ -179,28 +193,40 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          _buildMilestoneItem(
-            context,
-            'First Habit Completed',
-            'Completed your first habit',
-            '🏆',
-            true,
-          ),
-          const SizedBox(height: 12),
-          _buildMilestoneItem(
-            context,
-            '7-Day Streak',
-            'Maintained a habit for 7 days',
-            '🔥',
-            true,
-          ),
-          const SizedBox(height: 12),
-          _buildMilestoneItem(
-            context,
-            'Habit Master',
-            'Completed 50 habits',
-            '👑',
-            false,
+          FutureBuilder<List<Map<String, dynamic>>>(
+            future: _allMilestonesFuture,
+            builder: (context, allSnapshot) {
+              return StreamBuilder<List<Map<String, dynamic>>>(
+                stream: DatabaseService().userMilestonesStream,
+                builder: (context, unlockedSnapshot) {
+                  final allMilestones = allSnapshot.data ?? [];
+                  final unlockedMilestones = unlockedSnapshot.data ?? [];
+                  final unlockedIds = unlockedMilestones.map((m) => m['id']).toSet();
+
+                  if (allMilestones.isEmpty) {
+                    return const Center(child: Text('No milestones yet'));
+                  }
+
+                  return ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: allMilestones.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final milestone = allMilestones[index];
+                      final isUnlocked = unlockedIds.contains(milestone['id']);
+                      return _buildMilestoneItem(
+                        context,
+                        milestone['title'] ?? '',
+                        milestone['description'] ?? '',
+                        milestone['emoji'] ?? '⭐',
+                        isUnlocked,
+                      );
+                    },
+                  );
+                },
+              );
+            },
           ),
         ],
       ),
