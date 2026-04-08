@@ -29,6 +29,8 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
 
   Future<void> _loadInitialData() async {
     final music = await DatabaseService().getMusicTracks();
+
+    // Get habits from stream - wait for first non-empty list if possible
     final habits = await DatabaseService().habitsStream.first;
 
     if (mounted) {
@@ -37,6 +39,7 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
         if (habits.isNotEmpty) {
           _selectedHabit = habits.first;
           if (_selectedHabit!.musicId != null && _musicTracks.isNotEmpty) {
+            // Match by id (could be UUID from Supabase or string ID from FreeToUse)
             _selectedMusic = _musicTracks.firstWhere(
               (m) => m.id == _selectedHabit!.musicId,
               orElse: () => _musicTracks.first,
@@ -44,6 +47,8 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
           } else if (_musicTracks.isNotEmpty) {
             _selectedMusic = _musicTracks.first;
           }
+        } else if (_musicTracks.isNotEmpty) {
+          _selectedMusic = _musicTracks.first;
         }
       });
     }
@@ -69,6 +74,10 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
           _pepTalk = talk;
         });
       }
+    }
+
+    if (_isFocusing && _selectedMusic?.url != null) {
+      debugPrint('Simulating playing track: ${_selectedMusic!.title} from ${_selectedMusic!.url}');
     }
   }
 

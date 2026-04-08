@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/habit_model.dart';
 import '../models/music_model.dart';
+import 'music_service.dart';
 
 class DatabaseService {
   static DatabaseService? _instance;
@@ -191,14 +192,26 @@ class DatabaseService {
   }
 
   Future<List<MusicModel>> getMusicTracks() async {
+    // 1. Fetch from Supabase
     final response = await _supabase.from('music').select();
-    return (response as List).map((m) => MusicModel(
+    final List<MusicModel> tracks = (response as List).map((m) => MusicModel(
       id: m['id'].toString(),
       title: m['title'] ?? 'Unknown Title',
       artist: m['artist'] ?? 'Unknown Artist',
       category: m['category'] ?? 'General',
       duration: m['duration'] ?? '0:00',
+      url: m['url'],
     )).toList();
+
+    // 2. Fetch from Free To Use API and merge
+    try {
+      final freeTracks = await MusicService().fetchFreeToUseMusic();
+      tracks.addAll(freeTracks);
+    } catch (e) {
+      debugPrint('Error merging Free To Use Music: $e');
+    }
+
+    return tracks;
   }
 
   Stream<Map<String, dynamic>> get statsStream {

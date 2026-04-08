@@ -5,6 +5,7 @@ import '../services/theme_service.dart';
 import '../services/database_service.dart';
 import '../services/ai_service.dart';
 import '../models/habit_model.dart';
+import '../models/music_model.dart';
 import '../widgets/main_navigation.dart';
 
 class AddHabitScreen extends StatefulWidget {
@@ -23,13 +24,15 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
   String? _selectedMusicId;
   bool _isReminderEnabled = true;
 
-  final List<String> _categories = ['Mindfulness', 'Health', 'Learning', 'Productivity', 'General'];
+  final List<String> _categories = ['Mindfulness', 'Health', 'Studying', 'Workout', 'Productivity', 'General'];
   final DatabaseService _databaseService = DatabaseService();
   bool _isRefining = false;
+  Future<List<MusicModel>>? _musicTracksFuture;
 
   @override
   void initState() {
     super.initState();
+    _musicTracksFuture = _databaseService.getMusicTracks();
     if (widget.habit != null) {
       _nameController.text = widget.habit!.name;
       _selectedMascot = widget.habit!.mascot;
@@ -300,73 +303,89 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
   }
 
   Widget _buildMusicSelector() {
-    final musicTracks = MockDataService.getMusicByCategory(_selectedCategory);
     final isDark = ThemeService().isDarkMode;
     final theme = Theme.of(context);
 
-    if (musicTracks.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.darkSurface : AppColors.primaryLighter,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Text(
-          'No music tracks available for this category.',
-          style: TextStyle(color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
-        ),
-      );
-    }
+    return FutureBuilder<List<MusicModel>>(
+      future: _musicTracksFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: CircularProgressIndicator(color: AppColors.primary),
+            ),
+          );
+        }
 
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: musicTracks.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 8),
-      itemBuilder: (context, index) {
-        final track = musicTracks[index];
-        final isSelected = track.id == _selectedMusicId;
-        return GestureDetector(
-          onTap: () => setState(() => _selectedMusicId = track.id),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        final allMusic = snapshot.data ?? [];
+        final musicTracks = allMusic.where((track) => track.category == _selectedCategory).toList();
+
+        if (musicTracks.isEmpty) {
+          return Container(
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : (isDark ? AppColors.darkSurface : AppColors.primaryLighter),
+              color: isDark ? AppColors.darkSurface : AppColors.primaryLighter,
               borderRadius: BorderRadius.circular(16),
-              border: isSelected ? Border.all(color: AppColors.primary, width: 2) : null,
             ),
-            child: Row(
-              children: [
-                Icon(
-                  isSelected ? Icons.music_note_rounded : Icons.music_off_outlined,
-                  color: isSelected ? AppColors.primary : (isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        track.title,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: isSelected ? AppColors.primary : theme.colorScheme.onSurface,
-                        ),
-                      ),
-                      Text(
-                        track.artist,
-                        style: TextStyle(fontSize: 12, color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
-                      ),
-                    ],
-                  ),
-                ),
-                Text(
-                  track.duration,
-                  style: TextStyle(fontSize: 12, color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
-                ),
-              ],
+            child: Text(
+              'No music tracks available for this category.',
+              style: TextStyle(color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
             ),
-          ),
+          );
+        }
+
+        return ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: musicTracks.length,
+          separatorBuilder: (context, index) => const SizedBox(height: 8),
+          itemBuilder: (context, index) {
+            final track = musicTracks[index];
+            final isSelected = track.id == _selectedMusicId;
+            return GestureDetector(
+              onTap: () => setState(() => _selectedMusicId = track.id),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : (isDark ? AppColors.darkSurface : AppColors.primaryLighter),
+                  borderRadius: BorderRadius.circular(16),
+                  border: isSelected ? Border.all(color: AppColors.primary, width: 2) : null,
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      isSelected ? Icons.music_note_rounded : Icons.music_off_outlined,
+                      color: isSelected ? AppColors.primary : (isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            track.title,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: isSelected ? AppColors.primary : theme.colorScheme.onSurface,
+                            ),
+                          ),
+                          Text(
+                            track.artist,
+                            style: TextStyle(fontSize: 12, color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      track.duration,
+                      style: TextStyle(fontSize: 12, color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
     );
