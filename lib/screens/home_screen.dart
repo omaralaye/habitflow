@@ -247,6 +247,19 @@ class HomeScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = ThemeService().isDarkMode;
     return GestureDetector(
+      onDoubleTap: () async {
+        if (!habit.isCompletedToday) {
+          await DatabaseService().completeHabit(habit.id);
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('${habit.name} completed! +50 XP'),
+                duration: const Duration(seconds: 1),
+              ),
+            );
+          }
+        }
+      },
       onTap: () {
         Navigator.push(
           context,

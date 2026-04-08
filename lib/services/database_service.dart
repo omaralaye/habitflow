@@ -111,11 +111,146 @@ class DatabaseService {
 
   Future<void> completeHabit(String habitId) async {
     if (_uid == null) return;
+
+    // 1. Add completion record
     await _supabase.from('habit_completions').insert({
       'habit_id': habitId,
       'user_id': _uid,
       'completed_at': DateTime.now().toIso8601String().split('T')[0],
     });
+
+    // 2. Update habit streak
+    final habitResponse = await _supabase.from('habits').select('streak').eq('id', habitId).single();
+    final currentStreak = habitResponse['streak'] as int? ?? 0;
+    await _supabase.from('habits').update({'streak': currentStreak + 1}).eq('id', habitId);
+
+    // 3. Award XP to user
+    final profileResponse = await _supabase.from('profiles').select('xp, level').eq('id', _uid!).single();
+    int currentXp = profileResponse['xp'] as int? ?? 0;
+    int currentLevel = profileResponse['level'] as int? ?? 1;
+
+    currentXp += 50; // Award 50 XP per habit
+
+    // Check for level up: level * 500 XP per level
+    int nextLevelXp = currentLevel * 500;
+    if (currentXp >= nextLevelXp) {
+      currentXp -= nextLevelXp;
+      currentLevel += 1;
+    }
+
+    await _supabase.from('profiles').update({
+      'xp': currentXp,
+      'level': currentLevel,
+    }).eq('id', _uid!);
+  }
+
+  Stream<Map<String, dynamic>> get profileStream {
+    if (_uid == null) return const Stream.empty();
+    return _supabase
+        .from('profiles')
+        .stream(primaryKey: ['id'])
+        .eq('id', _uid!)
+        .map((data) => data.isNotEmpty ? data.first : {});
+  }
+
+  Stream<List<Map<String, dynamic>>> get userMilestonesStream {
+    if (_uid == null) return Stream.value([]);
+    return _supabase
+        .from('user_milestones')
+        .stream(primaryKey: ['user_id', 'milestone_id'])
+        .eq('user_id', _uid!)
+        .asyncMap((data) async {
+          if (data.isEmpty) return [];
+
+          final List<String> milestoneIds = data.map((item) => item['milestone_id'].toString()).toList();
+          final milestonesData = await _supabase
+              .from('milestones')
+              .select()
+              .filter('id', 'in', '(${milestoneIds.join(',')})');
+
+          final Map<String, Map<String, dynamic>> milestoneMap = {
+            for (var m in milestonesData as List) m['id'].toString(): Map<String, dynamic>.from(m)
+          };
+
+          return data.map((item) {
+            final mId = item['milestone_id'].toString();
+            final mData = milestoneMap[mId] ?? {};
+            return {
+              ...mData,
+              'unlocked_at': item['unlocked_at'],
+              'is_completed': true,
+            };
+          }).toList();
+        });
+  }
+
+  Future<List<Map<String, dynamic>>> getAllMilestones() async {
+    final response = await _supabase.from('milestones').select();
+    return List<Map<String, dynamic>>.from(response);
+  }
+
+  Stream<Map<String, dynamic>> get statsStream {
+    if (_uid == null) return Stream.value({});
+
+    return _supabase
+        .from('habit_completions')
+        .stream(primaryKey: ['id'])
+        .eq('user_id', _uid!)
+        .asyncMap((data) async {
+          final totalDone = data.length;
+
+          final habitsResponse = await _supabase
+              .from('habits')
+              .select('id')
+              .eq('user_id', _uid!);
+          final activeHabits = (habitsResponse as List).length;
+
+          // Perfect days: days where all active habits were completed
+          // This is a bit simplified for now
+          final Map<String, Set<String>> completionsByDate = {};
+          for (var c in data) {
+            final date = c['completed_at'] as String;
+            final habitId = c['habit_id'].toString();
+            completionsByDate.putIfAbsent(date, () => {}).add(habitId);
+          }
+
+          int perfectDays = 0;
+          if (activeHabits > 0) {
+            completionsByDate.forEach((date, completedHabits) {
+              if (completedHabits.length >= activeHabits) {
+                perfectDays++;
+              }
+            });
+          }
+
+          // Calculate success rate for the last 30 days
+          final thirtyDaysAgo = DateTime.now().subtract(const Duration(days: 30));
+          final recentCompletions = data.where((c) {
+            final date = DateTime.parse(c['completed_at'] as String);
+            return date.isAfter(thirtyDaysAgo);
+          }).length;
+
+          final expectedCompletions = activeHabits * 30;
+          final successRate = expectedCompletions > 0
+              ? (recentCompletions / expectedCompletions * 100).toInt().clamp(0, 100)
+              : 0;
+
+          // Weekly data (last 7 days)
+          final List<int> weeklyCompletions = List.filled(7, 0);
+          final now = DateTime.now();
+          for (int i = 0; i < 7; i++) {
+            final date = now.subtract(Duration(days: 6 - i)).toIso8601String().split('T')[0];
+            weeklyCompletions[i] = completionsByDate[date]?.length ?? 0;
+          }
+
+          return {
+            'totalDone': totalDone,
+            'activeHabits': activeHabits,
+            'perfectDays': perfectDays,
+            'successRate': successRate,
+            'weeklyCompletions': weeklyCompletions,
+          };
+        });
   }
 
   HabitModel _habitFromSupabase(Map<String, dynamic> data, List<String> completedDates) {
