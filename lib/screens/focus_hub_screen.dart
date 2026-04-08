@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../services/mock_data_service.dart';
 import '../utils/constants.dart';
 import '../services/theme_service.dart';
 import '../services/database_service.dart';
@@ -17,6 +16,7 @@ class FocusHubScreen extends StatefulWidget {
 class _FocusHubScreenState extends State<FocusHubScreen> {
   HabitModel? _selectedHabit;
   MusicModel? _selectedMusic;
+  List<MusicModel> _musicTracks = [];
   bool _isFocusing = false;
   double _focusProgress = 0.0;
   String? _pepTalk;
@@ -24,21 +24,26 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
   @override
   void initState() {
     super.initState();
-    _loadInitialHabit();
+    _loadInitialData();
   }
 
-  Future<void> _loadInitialHabit() async {
+  Future<void> _loadInitialData() async {
+    final music = await DatabaseService().getMusicTracks();
     final habits = await DatabaseService().habitsStream.first;
-    if (habits.isNotEmpty && mounted) {
+
+    if (mounted) {
       setState(() {
-        _selectedHabit = habits.first;
-        if (_selectedHabit!.musicId != null) {
-          _selectedMusic = MockDataService.musicTracks.firstWhere(
-            (m) => m.id == _selectedHabit!.musicId,
-            orElse: () => MockDataService.musicTracks.first,
-          );
-        } else {
-          _selectedMusic = MockDataService.musicTracks.first;
+        _musicTracks = music;
+        if (habits.isNotEmpty) {
+          _selectedHabit = habits.first;
+          if (_selectedHabit!.musicId != null && _musicTracks.isNotEmpty) {
+            _selectedMusic = _musicTracks.firstWhere(
+              (m) => m.id == _selectedHabit!.musicId,
+              orElse: () => _musicTracks.first,
+            );
+          } else if (_musicTracks.isNotEmpty) {
+            _selectedMusic = _musicTracks.first;
+          }
         }
       });
     }
@@ -68,20 +73,20 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
   }
 
   void _nextTrack() {
-    if (_selectedMusic == null) return;
-    final currentIndex = MockDataService.musicTracks.indexWhere((m) => m.id == _selectedMusic!.id);
-    final nextIndex = (currentIndex + 1) % MockDataService.musicTracks.length;
+    if (_selectedMusic == null || _musicTracks.isEmpty) return;
+    final currentIndex = _musicTracks.indexWhere((m) => m.id == _selectedMusic!.id);
+    final nextIndex = (currentIndex + 1) % _musicTracks.length;
     setState(() {
-      _selectedMusic = MockDataService.musicTracks[nextIndex];
+      _selectedMusic = _musicTracks[nextIndex];
     });
   }
 
   void _previousTrack() {
-    if (_selectedMusic == null) return;
-    final currentIndex = MockDataService.musicTracks.indexWhere((m) => m.id == _selectedMusic!.id);
-    final prevIndex = (currentIndex - 1 + MockDataService.musicTracks.length) % MockDataService.musicTracks.length;
+    if (_selectedMusic == null || _musicTracks.isEmpty) return;
+    final currentIndex = _musicTracks.indexWhere((m) => m.id == _selectedMusic!.id);
+    final prevIndex = (currentIndex - 1 + _musicTracks.length) % _musicTracks.length;
     setState(() {
-      _selectedMusic = MockDataService.musicTracks[prevIndex];
+      _selectedMusic = _musicTracks[prevIndex];
     });
   }
 
@@ -285,8 +290,8 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
                 onTap: () {
                   setState(() {
                     _selectedHabit = habit;
-                    if (habit.musicId != null) {
-                      _selectedMusic = MockDataService.musicTracks.firstWhere(
+                    if (habit.musicId != null && _musicTracks.isNotEmpty) {
+                      _selectedMusic = _musicTracks.firstWhere(
                         (m) => m.id == habit.musicId,
                         orElse: () => _selectedMusic!,
                       );
