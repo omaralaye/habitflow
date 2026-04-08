@@ -4,6 +4,7 @@ class MusicModel {
   final String artist;
   final String category;
   final String duration;
+  final String? url;
 
   MusicModel({
     required this.id,
@@ -11,5 +12,6 @@ class MusicModel {
     required this.artist,
     required this.category,
     required this.duration,
+    this.url,
   });
 }
