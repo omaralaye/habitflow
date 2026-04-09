@@ -22,6 +22,8 @@ class HabitModel {
   final String category;
   final bool isCompletedToday;
   final String? musicId;
+  final bool startReminderEnabled;
+  final TimeOfDay? startReminderTime;
   final bool endReminderEnabled;
   final TimeOfDay? endReminderTime;
 
@@ -61,6 +63,8 @@ class HabitModel {
     this.category = 'General',
     this.isCompletedToday = false,
     this.musicId,
+    this.startReminderEnabled = false,
+    this.startReminderTime,
     this.endReminderEnabled = true,
     this.endReminderTime,
   });
@@ -77,6 +81,8 @@ class HabitModel {
     String? category,
     bool? isCompletedToday,
     String? musicId,
+    bool? startReminderEnabled,
+    TimeOfDay? startReminderTime,
     bool? endReminderEnabled,
     TimeOfDay? endReminderTime,
   }) {
@@ -92,6 +98,8 @@ class HabitModel {
       category: category ?? this.category,
       isCompletedToday: isCompletedToday ?? this.isCompletedToday,
       musicId: musicId ?? this.musicId,
+      startReminderEnabled: startReminderEnabled ?? this.startReminderEnabled,
+      startReminderTime: startReminderTime ?? this.startReminderTime,
       endReminderEnabled: endReminderEnabled ?? this.endReminderEnabled,
       endReminderTime: endReminderTime ?? this.endReminderTime,
     );

@@ -26,8 +26,10 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
   MascotType _selectedMascot = MascotType.panda;
   String _selectedCategory = 'General';
   String? _selectedMusicId;
-  bool _isReminderEnabled = true;
-  TimeOfDay _selectedTime = const TimeOfDay(hour: 8, minute: 0);
+  bool _isStartReminderEnabled = false;
+  TimeOfDay _selectedStartTime = const TimeOfDay(hour: 8, minute: 0);
+  bool _isEndReminderEnabled = true;
+  TimeOfDay _selectedEndTime = const TimeOfDay(hour: 9, minute: 0);
 
   final List<String> _categories = ['Mindfulness', 'Health', 'Studying', 'Workout', 'Productivity', 'General'];
   final DatabaseService _databaseService = DatabaseService();
@@ -43,8 +45,10 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
       _selectedMascot = widget.habit!.mascot;
       _selectedCategory = widget.habit!.category;
       _selectedMusicId = widget.habit!.musicId;
-      _isReminderEnabled = widget.habit!.endReminderEnabled;
-      _selectedTime = widget.habit!.endReminderTime ?? const TimeOfDay(hour: 8, minute: 0);
+      _isStartReminderEnabled = widget.habit!.startReminderEnabled;
+      _selectedStartTime = widget.habit!.startReminderTime ?? const TimeOfDay(hour: 8, minute: 0);
+      _isEndReminderEnabled = widget.habit!.endReminderEnabled;
+      _selectedEndTime = widget.habit!.endReminderTime ?? const TimeOfDay(hour: 9, minute: 0);
     }
   }
 
@@ -135,8 +139,10 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                 category: _selectedCategory,
                 isCompletedToday: widget.habit?.isCompletedToday ?? false,
                 musicId: _selectedMusicId,
-                endReminderEnabled: _isReminderEnabled,
-                endReminderTime: _selectedTime,
+                startReminderEnabled: _isStartReminderEnabled,
+                startReminderTime: _selectedStartTime,
+                endReminderEnabled: _isEndReminderEnabled,
+                endReminderTime: _selectedEndTime,
               );
 
               try {
@@ -150,7 +156,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
 
                 if (savedHabit != null) {
                   // Schedule notification with the correct ID
-                  await NotificationService().scheduleHabitReminder(savedHabit);
+                  await NotificationService().scheduleHabitReminders(savedHabit);
                 }
 
                 if (!mounted) return;
@@ -266,7 +272,23 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
             const SizedBox(height: 12),
             _buildMusicSelector(),
             const SizedBox(height: 32),
-            _buildReminderSection(),
+            _buildReminderSection(
+              title: 'Start Habit Reminder',
+              subtitle: 'Get notified when it\'s time to start your habit.',
+              isEnabled: _isStartReminderEnabled,
+              time: _selectedStartTime,
+              onToggle: (val) => setState(() => _isStartReminderEnabled = val),
+              onTimeChanged: (time) => setState(() => _selectedStartTime = time),
+            ),
+            const SizedBox(height: 16),
+            _buildReminderSection(
+              title: 'End Habit Reminder',
+              subtitle: 'Get notified when it\'s time to wrap up your habit.',
+              isEnabled: _isEndReminderEnabled,
+              time: _selectedEndTime,
+              onToggle: (val) => setState(() => _isEndReminderEnabled = val),
+              onTimeChanged: (time) => setState(() => _selectedEndTime = time),
+            ),
             const SizedBox(height: 32),
           ],
         ),
@@ -463,7 +485,14 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     );
   }
 
-  Widget _buildReminderSection() {
+  Widget _buildReminderSection({
+    required String title,
+    required String subtitle,
+    required bool isEnabled,
+    required TimeOfDay time,
+    required Function(bool) onToggle,
+    required Function(TimeOfDay) onTimeChanged,
+  }) {
     final theme = Theme.of(context);
     final isDark = ThemeService().isDarkMode;
     return Container(
@@ -483,7 +512,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'End Habit Reminder',
+                      title,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -492,14 +521,14 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Get notified when it\'s time to wrap up your habit.',
+                      subtitle,
                       style: TextStyle(fontSize: 12, color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
                     ),
                   ],
                 ),
               ),
               Switch(
-                value: _isReminderEnabled,
+                value: isEnabled,
                 onChanged: (val) async {
                   if (val) {
                     final granted = await NotificationService().requestPermissions();
@@ -510,33 +539,29 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                       return;
                     }
                   }
-                  setState(() {
-                    _isReminderEnabled = val;
-                  });
+                  onToggle(val);
                 },
                 activeThumbColor: AppColors.primary,
               ),
             ],
           ),
-          if (_isReminderEnabled) ...[
+          if (isEnabled) ...[
             const Divider(height: 32),
             InkWell(
               onTap: () async {
                 final TimeOfDay? picked = await showTimePicker(
                   context: context,
-                  initialTime: _selectedTime,
+                  initialTime: time,
                 );
-                if (picked != null && picked != _selectedTime) {
-                  setState(() {
-                    _selectedTime = picked;
-                  });
+                if (picked != null && picked != time) {
+                  onTimeChanged(picked);
                 }
               },
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'End Time',
+                    'Reminder Time',
                     style: TextStyle(
                       fontSize: 14,
                       color: theme.colorScheme.onSurface,
@@ -549,7 +574,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      _selectedTime.format(context),
+                      time.format(context),
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         color: AppColors.primary,
