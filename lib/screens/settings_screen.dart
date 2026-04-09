@@ -3,6 +3,7 @@ import '../utils/constants.dart';
 import '../services/theme_service.dart';
 import '../services/auth_service.dart';
 import 'onboarding_screen.dart';
+import '../services/notification_service.dart';
 import 'settings/quiet_hours_screen.dart';
 import 'settings/email_settings_screen.dart';
 import 'settings/security_settings_screen.dart';
@@ -122,7 +123,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _buildSettingItem(
                 Icons.email_rounded,
                 'EMAIL ADDRESS',
-                'alex.flow@example.com',
+                AuthService().user?.email ?? 'Not signed in',
                 onTap: () {
                   Navigator.push(
                     context,
@@ -330,6 +331,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     if (confirmed == true && mounted) {
       try {
+        await NotificationService().cancelAllNotifications();
         await AuthService().signOut();
         if (mounted) {
           Navigator.pushAndRemoveUntil(

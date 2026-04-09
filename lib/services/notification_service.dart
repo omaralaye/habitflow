@@ -6,9 +6,14 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import '../models/habit_model.dart';
 
 class NotificationService {
-  static final NotificationService _instance = NotificationService._internal();
+  static NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
+
+  @visibleForTesting
+  static void setMockInstance(NotificationService mock) {
+    _instance = mock;
+  }
 
   final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
 

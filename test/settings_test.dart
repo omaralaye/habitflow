@@ -3,18 +3,26 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:habitflow/screens/settings_screen.dart';
 import 'package:habitflow/screens/onboarding_screen.dart';
 import 'package:habitflow/services/auth_service.dart';
+import 'package:habitflow/services/notification_service.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockAuthService extends Mock implements AuthService {}
+class MockNotificationService extends Mock implements NotificationService {}
 
 void main() {
   late MockAuthService mockAuthService;
+  late MockNotificationService mockNotificationService;
 
   setUp(() {
     mockAuthService = MockAuthService();
     AuthService.setMockInstance(mockAuthService);
 
+    mockNotificationService = MockNotificationService();
+    NotificationService.setMockInstance(mockNotificationService);
+
     when(() => mockAuthService.signOut()).thenAnswer((_) async {});
+    when(() => mockAuthService.user).thenReturn(null);
+    when(() => mockNotificationService.cancelAllNotifications()).thenAnswer((_) async {});
   });
 
   testWidgets('SettingsScreen shows Sign Out button and opens confirmation dialog', (WidgetTester tester) async {
