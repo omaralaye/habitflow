@@ -31,6 +31,8 @@ CREATE TABLE habits (
   mascot_level INTEGER DEFAULT 1,
   category TEXT,
   music_id UUID REFERENCES music(id) ON DELETE SET NULL,
+  start_reminder_enabled BOOLEAN DEFAULT FALSE,
+  start_reminder_time TIME,
   reminder_enabled BOOLEAN DEFAULT TRUE,
   reminder_time TIME,
   streak INTEGER DEFAULT 0,

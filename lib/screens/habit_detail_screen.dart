@@ -75,7 +75,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
               );
 
               if (confirm == true) {
-                await NotificationService().cancelHabitReminder(widget.habit.id);
+                await NotificationService().cancelHabitReminders(widget.habit.id);
                 await DatabaseService().deleteHabit(widget.habit.id);
                 if (mounted) {
                   Navigator.pop(context);
