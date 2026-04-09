@@ -40,16 +40,14 @@ class AuthService extends ChangeNotifier {
 
   Future<void> signUp(String email, String password, {String? name, String? emoji}) async {
     try {
-      final AuthResponse response = await _supabase.auth.signUp(email: email, password: password);
-      if (response.user != null) {
-        await _supabase.from('profiles').insert({
-          'id': response.user!.id,
-          'name': name ?? '',
-          'email': email,
+      await _supabase.auth.signUp(
+        email: email,
+        password: password,
+        data: {
+          'full_name': name ?? '',
           'emoji': emoji ?? '🦊',
-          'created_at': DateTime.now().toIso8601String(),
-        });
-      }
+        },
+      );
     } catch (e) {
       rethrow;
     }
