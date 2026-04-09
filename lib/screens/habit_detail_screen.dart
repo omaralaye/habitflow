@@ -5,6 +5,7 @@ import '../services/database_service.dart';
 import '../services/ai_service.dart';
 import '../models/habit_model.dart';
 import 'add_habit_screen.dart';
+import '../services/notification_service.dart';
 
 class HabitDetailScreen extends StatefulWidget {
   final HabitModel habit;
@@ -74,6 +75,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
               );
 
               if (confirm == true) {
+                await NotificationService().cancelHabitReminder(widget.habit.id);
                 await DatabaseService().deleteHabit(widget.habit.id);
                 if (mounted) {
                   Navigator.pop(context);

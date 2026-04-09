@@ -22,6 +22,8 @@ class HabitModel {
   final String category;
   final bool isCompletedToday;
   final String? musicId;
+  final bool reminderEnabled;
+  final TimeOfDay? reminderTime;
 
   static String mascotToEmoji(MascotType type) {
     switch (type) {
@@ -59,6 +61,8 @@ class HabitModel {
     this.category = 'General',
     this.isCompletedToday = false,
     this.musicId,
+    this.reminderEnabled = true,
+    this.reminderTime,
   });
 
   HabitModel copyWith({
@@ -73,6 +77,8 @@ class HabitModel {
     String? category,
     bool? isCompletedToday,
     String? musicId,
+    bool? reminderEnabled,
+    TimeOfDay? reminderTime,
   }) {
     return HabitModel(
       id: id ?? this.id,
@@ -86,6 +92,8 @@ class HabitModel {
       category: category ?? this.category,
       isCompletedToday: isCompletedToday ?? this.isCompletedToday,
       musicId: musicId ?? this.musicId,
+      reminderEnabled: reminderEnabled ?? this.reminderEnabled,
+      reminderTime: reminderTime ?? this.reminderTime,
     );
   }
 }
