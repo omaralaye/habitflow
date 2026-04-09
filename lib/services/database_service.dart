@@ -60,8 +60,8 @@ class DatabaseService {
         });
   }
 
-  Future<void> addHabit(HabitModel habit) async {
-    if (_uid == null) return;
+  Future<HabitModel?> addHabit(HabitModel habit) async {
+    if (_uid == null) return null;
     final habitData = _habitToSupabase(habit);
 
     // Ensure music_id is a valid UUID or null
@@ -72,10 +72,12 @@ class DatabaseService {
       }
     }
 
-    await _supabase.from('habits').insert({
+    final response = await _supabase.from('habits').insert({
       ...habitData,
       'user_id': _uid,
-    });
+    }).select().single();
+
+    return _habitFromSupabase(response, []);
   }
 
   Future<bool> hasHabits() async {
@@ -290,6 +292,17 @@ class DatabaseService {
     }).length;
     final progress = ((recentCompletions / 30) * 100).toInt().clamp(0, 100);
 
+    TimeOfDay? reminderTime;
+    if (data['reminder_time'] != null) {
+      final parts = (data['reminder_time'] as String).split(':');
+      if (parts.length >= 2) {
+        reminderTime = TimeOfDay(
+          hour: int.parse(parts[0]),
+          minute: int.parse(parts[1]),
+        );
+      }
+    }
+
     return HabitModel(
       id: data['id'].toString(),
       name: data['name'] ?? '',
@@ -302,10 +315,19 @@ class DatabaseService {
       category: data['category'] ?? 'General',
       isCompletedToday: isCompletedToday,
       musicId: data['music_id'],
+      reminderEnabled: data['reminder_enabled'] ?? true,
+      reminderTime: reminderTime,
     );
   }
 
   Map<String, dynamic> _habitToSupabase(HabitModel habit) {
+    String? reminderTimeStr;
+    if (habit.reminderTime != null) {
+      final hour = habit.reminderTime!.hour.toString().padLeft(2, '0');
+      final minute = habit.reminderTime!.minute.toString().padLeft(2, '0');
+      reminderTimeStr = '$hour:$minute:00';
+    }
+
     return {
       'name': habit.name,
       'color': _colorToHex(habit.color),
@@ -314,6 +336,8 @@ class DatabaseService {
       'mascot_level': habit.mascotLevel,
       'category': habit.category,
       'music_id': habit.musicId,
+      'reminder_enabled': habit.reminderEnabled,
+      'reminder_time': reminderTimeStr,
     };
   }
 

@@ -7,6 +7,7 @@ import '../services/ai_service.dart';
 import '../models/habit_model.dart';
 import '../models/music_model.dart';
 import '../widgets/main_navigation.dart';
+import '../services/notification_service.dart';
 
 class AddHabitScreen extends StatefulWidget {
   final HabitModel? habit;
@@ -26,6 +27,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
   String _selectedCategory = 'General';
   String? _selectedMusicId;
   bool _isReminderEnabled = true;
+  TimeOfDay _selectedTime = const TimeOfDay(hour: 8, minute: 0);
 
   final List<String> _categories = ['Mindfulness', 'Health', 'Studying', 'Workout', 'Productivity', 'General'];
   final DatabaseService _databaseService = DatabaseService();
@@ -41,6 +43,8 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
       _selectedMascot = widget.habit!.mascot;
       _selectedCategory = widget.habit!.category;
       _selectedMusicId = widget.habit!.musicId;
+      _isReminderEnabled = widget.habit!.reminderEnabled;
+      _selectedTime = widget.habit!.reminderTime ?? const TimeOfDay(hour: 8, minute: 0);
     }
   }
 
@@ -131,13 +135,22 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                 category: _selectedCategory,
                 isCompletedToday: widget.habit?.isCompletedToday ?? false,
                 musicId: _selectedMusicId,
+                reminderEnabled: _isReminderEnabled,
+                reminderTime: _selectedTime,
               );
 
               try {
+                HabitModel? savedHabit;
                 if (isEditing) {
                   await _databaseService.updateHabit(habit);
+                  savedHabit = habit;
                 } else {
-                  await _databaseService.addHabit(habit);
+                  savedHabit = await _databaseService.addHabit(habit);
+                }
+
+                if (savedHabit != null) {
+                  // Schedule notification with the correct ID
+                  await NotificationService().scheduleHabitReminder(savedHabit);
                 }
 
                 if (!mounted) return;
@@ -459,39 +472,94 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
         color: isDark ? theme.cardTheme.color : AppColors.bgSky,
         borderRadius: BorderRadius.circular(24),
       ),
-      child: Row(
+      child: Column(
         children: [
-          const Icon(Icons.notifications_active_rounded, color: AppColors.primary),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Daily Reminder',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onSurface,
+          Row(
+            children: [
+              const Icon(Icons.notifications_active_rounded, color: AppColors.primary),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Daily Reminder',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Receive a nudge to stay on track.',
+                      style: TextStyle(fontSize: 12, color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
+                    ),
+                  ],
+                ),
+              ),
+              Switch(
+                value: _isReminderEnabled,
+                onChanged: (val) async {
+                  if (val) {
+                    final granted = await NotificationService().requestPermissions();
+                    if (!granted && mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Notification permissions are required for reminders.')),
+                      );
+                      return;
+                    }
+                  }
+                  setState(() {
+                    _isReminderEnabled = val;
+                  });
+                },
+                activeThumbColor: AppColors.primary,
+              ),
+            ],
+          ),
+          if (_isReminderEnabled) ...[
+            const Divider(height: 32),
+            InkWell(
+              onTap: () async {
+                final TimeOfDay? picked = await showTimePicker(
+                  context: context,
+                  initialTime: _selectedTime,
+                );
+                if (picked != null && picked != _selectedTime) {
+                  setState(() {
+                    _selectedTime = picked;
+                  });
+                }
+              },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Reminder Time',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: theme.colorScheme.onSurface,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '8:00 AM',
-                  style: TextStyle(fontSize: 14, color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
-                ),
-              ],
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.darkSurface : AppColors.primaryLighter,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      _selectedTime.format(context),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Switch(
-            value: _isReminderEnabled,
-            onChanged: (val) {
-              setState(() {
-                _isReminderEnabled = val;
-              });
-            },
-            activeThumbColor: AppColors.primary,
-          ),
+          ],
         ],
       ),
     );
