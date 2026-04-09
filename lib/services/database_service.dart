@@ -292,11 +292,11 @@ class DatabaseService {
     }).length;
     final progress = ((recentCompletions / 30) * 100).toInt().clamp(0, 100);
 
-    TimeOfDay? reminderTime;
+    TimeOfDay? endReminderTime;
     if (data['reminder_time'] != null) {
       final parts = (data['reminder_time'] as String).split(':');
       if (parts.length >= 2) {
-        reminderTime = TimeOfDay(
+        endReminderTime = TimeOfDay(
           hour: int.parse(parts[0]),
           minute: int.parse(parts[1]),
         );
@@ -315,17 +315,17 @@ class DatabaseService {
       category: data['category'] ?? 'General',
       isCompletedToday: isCompletedToday,
       musicId: data['music_id'],
-      reminderEnabled: data['reminder_enabled'] ?? true,
-      reminderTime: reminderTime,
+      endReminderEnabled: data['reminder_enabled'] ?? true,
+      endReminderTime: endReminderTime,
     );
   }
 
   Map<String, dynamic> _habitToSupabase(HabitModel habit) {
-    String? reminderTimeStr;
-    if (habit.reminderTime != null) {
-      final hour = habit.reminderTime!.hour.toString().padLeft(2, '0');
-      final minute = habit.reminderTime!.minute.toString().padLeft(2, '0');
-      reminderTimeStr = '$hour:$minute:00';
+    String? endReminderTimeStr;
+    if (habit.endReminderTime != null) {
+      final hour = habit.endReminderTime!.hour.toString().padLeft(2, '0');
+      final minute = habit.endReminderTime!.minute.toString().padLeft(2, '0');
+      endReminderTimeStr = '$hour:$minute:00';
     }
 
     return {
@@ -336,8 +336,8 @@ class DatabaseService {
       'mascot_level': habit.mascotLevel,
       'category': habit.category,
       'music_id': habit.musicId,
-      'reminder_enabled': habit.reminderEnabled,
-      'reminder_time': reminderTimeStr,
+      'reminder_enabled': habit.endReminderEnabled,
+      'reminder_time': endReminderTimeStr,
     };
   }
 

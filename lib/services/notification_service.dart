@@ -57,7 +57,7 @@ class NotificationService {
   }
 
   Future<void> scheduleHabitReminder(HabitModel habit) async {
-    if (!habit.reminderEnabled || habit.reminderTime == null) {
+    if (!habit.endReminderEnabled || habit.endReminderTime == null) {
       await cancelHabitReminder(habit.id);
       return;
     }
@@ -71,8 +71,8 @@ class NotificationService {
       now.year,
       now.month,
       now.day,
-      habit.reminderTime!.hour,
-      habit.reminderTime!.minute,
+      habit.endReminderTime!.hour,
+      habit.endReminderTime!.minute,
     );
 
     if (scheduledDate.isBefore(now)) {
@@ -81,8 +81,8 @@ class NotificationService {
 
     await _notificationsPlugin.zonedSchedule(
       id: id,
-      title: 'Time for your habit! $emoji',
-      body: 'Keep your flow going with "${habit.name}"',
+      title: 'Time to wrap up! $emoji',
+      body: 'You\'ve done great with "${habit.name}". Time to finish and reflect.',
       scheduledDate: scheduledDate,
       notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(

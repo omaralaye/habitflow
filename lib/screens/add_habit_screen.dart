@@ -43,8 +43,8 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
       _selectedMascot = widget.habit!.mascot;
       _selectedCategory = widget.habit!.category;
       _selectedMusicId = widget.habit!.musicId;
-      _isReminderEnabled = widget.habit!.reminderEnabled;
-      _selectedTime = widget.habit!.reminderTime ?? const TimeOfDay(hour: 8, minute: 0);
+      _isReminderEnabled = widget.habit!.endReminderEnabled;
+      _selectedTime = widget.habit!.endReminderTime ?? const TimeOfDay(hour: 8, minute: 0);
     }
   }
 
@@ -135,8 +135,8 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                 category: _selectedCategory,
                 isCompletedToday: widget.habit?.isCompletedToday ?? false,
                 musicId: _selectedMusicId,
-                reminderEnabled: _isReminderEnabled,
-                reminderTime: _selectedTime,
+                endReminderEnabled: _isReminderEnabled,
+                endReminderTime: _selectedTime,
               );
 
               try {
@@ -483,7 +483,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Daily Reminder',
+                      'End Habit Reminder',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -492,7 +492,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Receive a nudge to stay on track.',
+                      'Get notified when it\'s time to wrap up your habit.',
                       style: TextStyle(fontSize: 12, color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
                     ),
                   ],
@@ -536,7 +536,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Reminder Time',
+                    'End Time',
                     style: TextStyle(
                       fontSize: 14,
                       color: theme.colorScheme.onSurface,
