@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'utils/constants.dart';
 import 'screens/onboarding_screen.dart';
 import 'services/theme_service.dart';
+import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -11,6 +12,9 @@ void main() async {
     url: SupabaseConstants.SUPABASE_URL,
     anonKey: SupabaseConstants.SUPABASE_ANON_KEY,
   );
+
+  await NotificationService().init();
+
   runApp(const MyApp());
 }
 

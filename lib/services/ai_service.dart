@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 import 'package:openai_dart/openai_dart.dart';
 import '../models/habit_model.dart';
@@ -34,6 +35,107 @@ class AIService {
     } catch (e) {
       // Fallback to mock logic if API fails or key is placeholder
       return _mockRefineHabit(habitName);
+    }
+  }
+
+  /// Refines a habit and recommends a category in a single AI call.
+  Future<Map<String, String>> refineAndCategorize(String habitName) async {
+    const categories = ['Mindfulness', 'Health', 'Studying', 'Workout', 'Productivity', 'General'];
+
+    try {
+      final response = await _client.createChatCompletion(
+        request: CreateChatCompletionRequest(
+          model: ChatCompletionModel.modelId(OpenAIConstants.OPENAI_MODEL),
+          messages: [
+            const ChatCompletionMessage.system(
+              content: 'You are a habit coaching assistant. Refine the habit into something specific (max 10 words) and categorize it into exactly one of: Mindfulness, Health, Studying, Workout, Productivity, General. Return ONLY a JSON object like {"refinedName": "...", "category": "..."}.',
+            ),
+            ChatCompletionMessage.user(
+              content: ChatCompletionUserMessageContent.string('Refine and categorize: $habitName'),
+            ),
+          ],
+          temperature: 0.5,
+          maxTokens: 100,
+        ),
+      );
+
+      final content = response.choices.first.message.content?.trim() ?? '';
+
+      if (content.isNotEmpty) {
+        // Find the JSON block
+        final jsonMatch = RegExp(r'\{.*\}', dotAll: true).stringMatch(content);
+        if (jsonMatch != null) {
+          final Map<String, dynamic> data = jsonDecode(jsonMatch);
+
+          String category = data['category'] ?? 'General';
+          if (!categories.contains(category)) {
+             // Try to map to nearest category or default
+             category = _mapToValidCategory(category);
+          }
+
+          final refined = data['refinedName']?.toString().trim();
+
+          return {
+            'refinedName': (refined != null && refined.isNotEmpty) ? refined : habitName,
+            'category': category,
+          };
+        }
+      }
+
+      // Fallback to separate calls if JSON parsing fails
+      return {
+        'refinedName': await refineHabit(habitName),
+        'category': await recommendCategory(habitName),
+      };
+    } catch (e) {
+      return {
+        'refinedName': _mockRefineHabit(habitName),
+        'category': _mockRecommendCategory(habitName),
+      };
+    }
+  }
+
+  String _mapToValidCategory(String input) {
+    const categories = ['Mindfulness', 'Health', 'Studying', 'Workout', 'Productivity', 'General'];
+    final lowerInput = input.toLowerCase();
+
+    if (lowerInput.contains('mind') || lowerInput.contains('zen')) return 'Mindfulness';
+    if (lowerInput.contains('health') || lowerInput.contains('well')) return 'Health';
+    if (lowerInput.contains('study') || lowerInput.contains('learn')) return 'Studying';
+    if (lowerInput.contains('work') || lowerInput.contains('gym') || lowerInput.contains('exercise')) return 'Workout';
+    if (lowerInput.contains('prod') || lowerInput.contains('focus')) return 'Productivity';
+
+    return 'General';
+  }
+
+  /// Recommends a category for a habit based on its name using OpenAI.
+  Future<String> recommendCategory(String habitName) async {
+    const categories = ['Mindfulness', 'Health', 'Studying', 'Workout', 'Productivity', 'General'];
+
+    try {
+      final response = await _client.createChatCompletion(
+        request: CreateChatCompletionRequest(
+          model: ChatCompletionModel.modelId(OpenAIConstants.OPENAI_MODEL),
+          messages: [
+            const ChatCompletionMessage.system(
+              content: 'You are a habit organization assistant. Categorize the habit provided by the user into exactly one of these categories: Mindfulness, Health, Studying, Workout, Productivity, General. Output only the category name.',
+            ),
+            ChatCompletionMessage.user(
+              content: ChatCompletionUserMessageContent.string('Categorize this habit: $habitName'),
+            ),
+          ],
+          temperature: 0.3,
+          maxTokens: 10,
+        ),
+      );
+
+      final category = response.choices.first.message.content?.trim();
+      if (category != null && categories.contains(category)) {
+        return category;
+      }
+      return _mockRecommendCategory(habitName);
+    } catch (e) {
+      return _mockRecommendCategory(habitName);
     }
   }
 
@@ -122,6 +224,23 @@ class AIService {
     final random = Random();
     final talks = _mascotPepTalks[habit.mascot] ?? ['Let\'s stay focused together!'];
     return talks[random.nextInt(talks.length)];
+  }
+
+  String _mockRecommendCategory(String habitName) {
+    final lowerName = habitName.toLowerCase();
+    if (lowerName.contains('meditate') || lowerName.contains('breath') || lowerName.contains('zen')) {
+      return 'Mindfulness';
+    } else if (lowerName.contains('read') || lowerName.contains('study') || lowerName.contains('learn') || lowerName.contains('code')) {
+      return 'Studying';
+    } else if (lowerName.contains('exercise') || lowerName.contains('workout') || lowerName.contains('run') || lowerName.contains('gym')) {
+      return 'Workout';
+    } else if (lowerName.contains('water') || lowerName.contains('sleep') || lowerName.contains('eat') || lowerName.contains('fruit')) {
+      return 'Health';
+    } else if (lowerName.contains('work') || lowerName.contains('clean') || lowerName.contains('task')) {
+      return 'Productivity';
+    } else {
+      return 'General';
+    }
   }
 
   final Map<MascotType, String> _mascotPersonalities = {
