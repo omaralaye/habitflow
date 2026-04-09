@@ -11,7 +11,7 @@ class MusicService {
   Future<List<MusicModel>> fetchFreeToUseMusic({int limit = 100}) async {
     try {
       final response = await http.get(
-        Uri.parse('${MusicConstants.BASE_API_URL}/music/tracks/all?limit=$limit&order=release_date'),
+        Uri.parse('${MusicConstants.BASE_DATA_URL}/music/tracks/all?limit=$limit&order=release_date'),
       );
 
       if (response.statusCode == 200) {
