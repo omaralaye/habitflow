@@ -75,7 +75,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       stream: DatabaseService().profileStream,
       builder: (context, snapshot) {
         final profile = snapshot.data;
-        final String name = profile?['name'] ?? 'Alex Johnson';
+        final String name = profile?['name'] ?? (snapshot.connectionState == ConnectionState.waiting ? 'Loading...' : 'User');
         final String emoji = profile?['emoji'] ?? '🦊';
         final int level = profile?['level'] ?? 1;
         final int xp = profile?['xp'] ?? 0;

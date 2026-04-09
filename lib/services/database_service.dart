@@ -24,7 +24,10 @@ class DatabaseService {
   String? get _uid => _supabase.auth.currentUser?.id;
 
   Stream<List<HabitModel>> get habitsStream {
-    if (_uid == null) return Stream.value([]);
+    if (_uid == null) {
+      debugPrint('habitsStream: _uid is null');
+      return Stream.value([]);
+    }
 
     // Using a more complex stream that combines habits and completions
     return _supabase
