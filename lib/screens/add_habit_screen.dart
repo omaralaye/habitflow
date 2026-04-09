@@ -19,6 +19,9 @@ class AddHabitScreen extends StatefulWidget {
 
 class _AddHabitScreenState extends State<AddHabitScreen> {
   final TextEditingController _nameController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _musicSectionKey = GlobalKey();
+
   MascotType _selectedMascot = MascotType.panda;
   String _selectedCategory = 'General';
   String? _selectedMusicId;
@@ -44,6 +47,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -53,11 +57,33 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
 
     setState(() => _isRefining = true);
     try {
-      final refinedName = await AIService().refineHabit(name);
+      final result = await AIService().refineAndCategorize(name);
+
       if (mounted) {
         setState(() {
-          _nameController.text = refinedName;
+          _nameController.text = result['refinedName'] ?? name;
+          _selectedCategory = result['category'] ?? 'General';
+          _selectedMusicId = null; // Reset music when category changes
           _isRefining = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('AI suggested the "${result['category']}" category and updated your tracks!'),
+            backgroundColor: AppColors.primary,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+
+        // Delay to allow UI to update before scrolling to music section
+        Future.delayed(const Duration(milliseconds: 300), () {
+          if (mounted && _musicSectionKey.currentContext != null) {
+            Scrollable.ensureVisible(
+              _musicSectionKey.currentContext!,
+              duration: const Duration(milliseconds: 600),
+              curve: Curves.easeInOut,
+            );
+          }
         });
       }
     } catch (e) {
@@ -152,6 +178,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
         ],
       ),
       body: SingleChildScrollView(
+        controller: _scrollController,
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -216,6 +243,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
             const SizedBox(height: 32),
             Text(
               'Smoothing Music',
+              key: _musicSectionKey,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
