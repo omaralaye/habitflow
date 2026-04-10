@@ -84,6 +84,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
+                          const SizedBox(height: 20),
+                          Center(
+                            child: Container(
+                              width: 80,
+                              height: 80,
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: isDark ? AppColors.darkSurface : AppColors.primaryLighter,
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              child: Image.asset(
+                                'assets/images/logo.png',
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                          ),
                           const SizedBox(height: 40),
                           Container(
                             width: 140,

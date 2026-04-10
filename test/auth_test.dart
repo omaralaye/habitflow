@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:habitflow/screens/login_screen.dart';
-import 'package:habitflow/screens/signup_screen.dart';
-import 'package:habitflow/widgets/main_navigation.dart';
-import 'package:habitflow/services/auth_service.dart';
-import 'package:habitflow/services/database_service.dart';
+import 'package:sanctuary/screens/login_screen.dart';
+import 'package:sanctuary/screens/signup_screen.dart';
+import 'package:sanctuary/widgets/main_navigation.dart';
+import 'package:sanctuary/services/auth_service.dart';
+import 'package:sanctuary/services/database_service.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockAuthService extends Mock implements AuthService {}

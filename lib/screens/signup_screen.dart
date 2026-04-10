@@ -114,6 +114,22 @@ class _SignupScreenState extends State<SignupScreen> {
                     const SizedBox(height: 20),
                     Center(
                       child: Container(
+                        width: 80,
+                        height: 80,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: isDark ? AppColors.darkSurface : AppColors.primaryLighter,
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Image.asset(
+                          'assets/images/logo.png',
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Center(
+                      child: Container(
                         width: 100,
                         height: 100,
                         decoration: BoxDecoration(
@@ -166,15 +182,19 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                     ),
                     const SizedBox(height: 40),
-                    Text(
-                      'Join Sanctuary',
-                      style: theme.textTheme.displayLarge?.copyWith(fontSize: 32),
+                    Center(
+                      child: Text(
+                        'Join Sanctuary',
+                        style: theme.textTheme.displayLarge?.copyWith(fontSize: 32),
+                      ),
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      'Start your journey towards a better you.',
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey,
+                    Center(
+                      child: Text(
+                        'Start your journey towards a better you.',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 40),
