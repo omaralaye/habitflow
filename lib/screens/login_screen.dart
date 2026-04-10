@@ -18,7 +18,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _isLoading = false;
-  final String _loginEmoji = '🐢'; // Adding a friendly emoji for login
 
   @override
   void dispose() {
@@ -108,30 +107,33 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 20),
                     Center(
                       child: Container(
-                        width: 100,
-                        height: 100,
+                        width: 80,
+                        height: 80,
+                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: isDark ? AppColors.darkSurface : AppColors.primaryLighter,
-                          borderRadius: BorderRadius.circular(30),
+                          borderRadius: BorderRadius.circular(24),
                         ),
-                        child: Center(
-                          child: Text(
-                            _loginEmoji,
-                            style: const TextStyle(fontSize: 50),
-                          ),
+                        child: Image.asset(
+                          'assets/images/logo.png',
+                          fit: BoxFit.contain,
                         ),
                       ),
                     ),
                     const SizedBox(height: 40),
-                    Text(
-                      'Welcome Back',
-                      style: theme.textTheme.displayLarge?.copyWith(fontSize: 32),
+                    Center(
+                      child: Text(
+                        'Welcome Back',
+                        style: theme.textTheme.displayLarge?.copyWith(fontSize: 32),
+                      ),
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      'Log in to continue your journey.',
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey,
+                    Center(
+                      child: Text(
+                        'Log in to continue your journey.',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 40),
