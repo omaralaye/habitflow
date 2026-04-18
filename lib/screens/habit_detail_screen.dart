@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 import '../services/theme_service.dart';
-import '../services/mock_data_service.dart';
+import '../services/database_service.dart';
+import '../services/ai_service.dart';
 import '../models/habit_model.dart';
 import 'add_habit_screen.dart';
+import '../services/notification_service.dart';
 
 class HabitDetailScreen extends StatefulWidget {
   final HabitModel habit;
@@ -15,11 +17,13 @@ class HabitDetailScreen extends StatefulWidget {
 
 class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  Future<String>? _mascotWisdomFuture;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _mascotWisdomFuture = AIService().getMascotInsight(widget.habit);
   }
 
   @override
@@ -49,6 +53,36 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
               });
             },
             icon: const Icon(Icons.edit_rounded, color: AppColors.primary),
+          ),
+          IconButton(
+            onPressed: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Delete Habit'),
+                  content: const Text('Are you sure you want to delete this habit?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                    ),
+                  ],
+                ),
+              );
+
+              if (confirm == true) {
+                await NotificationService().cancelHabitReminders(widget.habit.id);
+                await DatabaseService().deleteHabit(widget.habit.id);
+                if (mounted) {
+                  Navigator.pop(context);
+                }
+              }
+            },
+            icon: const Icon(Icons.delete_outline_rounded, color: Colors.red),
           ),
           const SizedBox(width: 8),
         ],
@@ -99,25 +133,31 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
     final theme = Theme.of(context);
     final isDark = ThemeService().isDarkMode;
 
-    return SingleChildScrollView(
+    return StreamBuilder<List<HabitModel>>(
+      stream: DatabaseService().habitsStream,
+      builder: (context, snapshot) {
+        final habits = snapshot.data ?? [];
+        final habit = habits.firstWhere((h) => h.id == widget.habit.id, orElse: () => widget.habit);
+
+        return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: isDark ? theme.cardTheme.color : MockDataService.getPastelColorForMascot(widget.habit.mascot),
+              color: isDark ? theme.cardTheme.color : HabitModel.getPastelColorForMascot(widget.habit.mascot),
               borderRadius: BorderRadius.circular(32),
             ),
             child: Column(
               children: [
                 Text(
-                  MockDataService.mascotToEmoji(widget.habit.mascot),
+                  HabitModel.mascotToEmoji(habit.mascot),
                   style: const TextStyle(fontSize: 120),
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  '${widget.habit.mascot.name.toUpperCase()} LVL ${widget.habit.mascotLevel}',
+                  '${habit.mascot.name.toUpperCase()} LVL ${habit.mascotLevel}',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -126,20 +166,26 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
                   ),
                 ),
                 const SizedBox(height: 32),
-                _buildEvolutionProgress(),
+                _buildEvolutionProgress(habit),
               ],
             ),
           ),
           const SizedBox(height: 32),
-          _buildMascotStatus(),
+          _buildMascotStatus(habit),
         ],
       ),
     );
+      },
+    );
   }
 
-  Widget _buildEvolutionProgress() {
+  Widget _buildEvolutionProgress(HabitModel habit) {
     final theme = Theme.of(context);
     final isDark = ThemeService().isDarkMode;
+
+    // Mascot evolves every 10 completions.
+    final int totalCompletions = habit.completedDays.length;
+    final double evolutionProgress = (totalCompletions % 10) / 10.0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,7 +194,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'EVOLUTION PROGRESS',
+              'PROGRESS TO LVL ${habit.mascotLevel + 1}',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
@@ -157,7 +203,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
               ),
             ),
             Text(
-              '75%',
+              '${totalCompletions % 10} / 10',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
@@ -170,7 +216,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
         ClipRRect(
           borderRadius: BorderRadius.circular(10),
           child: LinearProgressIndicator(
-            value: 0.75,
+            value: evolutionProgress,
             minHeight: 12,
             backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
             valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
@@ -178,7 +224,9 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
         ),
         const SizedBox(height: 12),
         Text(
-          'Keep going to evolve into a Giant Panda!',
+          evolutionProgress >= 0.9
+              ? 'Your ${habit.mascot.name} is about to reach Level ${habit.mascotLevel + 1}!'
+              : 'Complete ${10 - (totalCompletions % 10)} more sessions to reach Level ${habit.mascotLevel + 1}!',
           style: TextStyle(
             fontSize: 12,
             color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey,
@@ -189,45 +237,132 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
     );
   }
 
-  Widget _buildMascotStatus() {
+  Widget _buildMascotStatus(HabitModel habit) {
     final isDark = ThemeService().isDarkMode;
     final theme = Theme.of(context);
 
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: isDark ? theme.cardTheme.color : AppColors.primaryLighter,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.auto_awesome_rounded, color: AppColors.primary),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              'Your ${widget.habit.mascot.name.toLowerCase()} is feeling energized today because of your consistent ${widget.habit.name.toLowerCase()} practice!',
-              style: TextStyle(
-                fontSize: 14,
-                color: theme.colorScheme.onSurface,
-                height: 1.4,
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: isDark ? theme.cardTheme.color : AppColors.primaryLighter,
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.auto_awesome_rounded, color: AppColors.primary),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  'Your ${habit.mascot.name.toLowerCase()} is feeling energized today because of your consistent ${habit.name.toLowerCase()} practice!',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: theme.colorScheme.onSurface,
+                    height: 1.4,
+                  ),
+                ),
               ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+        _buildMascotWisdom(habit),
+      ],
+    );
+  }
+
+  Widget _buildMascotWisdom(HabitModel habit) {
+    final isDark = ThemeService().isDarkMode;
+    final theme = Theme.of(context);
+
+    return FutureBuilder<String>(
+      future: _mascotWisdomFuture,
+      builder: (context, snapshot) {
+        final insight = snapshot.data ?? 'Reflecting on your journey...';
+        final isLoading = snapshot.connectionState == ConnectionState.waiting;
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: isDark
+                  ? [AppColors.darkSurface, AppColors.darkCard]
+                  : [AppColors.primary.withOpacity(0.1), AppColors.primaryLight.withOpacity(0.05)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: AppColors.primary.withOpacity(0.2),
+              width: 1,
             ),
           ),
-        ],
-      ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.psychology_rounded, color: AppColors.primary, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Mascot\'s Wisdom',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  const Spacer(),
+                  if (isLoading)
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                insight,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontStyle: FontStyle.italic,
+                  color: theme.colorScheme.onSurface.withOpacity(0.8),
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
   Widget _buildStreaksTab() {
     final theme = Theme.of(context);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildStreakSummary(),
-          const SizedBox(height: 24),
+    return StreamBuilder<List<HabitModel>>(
+      stream: DatabaseService().habitsStream,
+      builder: (context, snapshot) {
+        final habits = snapshot.data ?? [];
+        final habit = habits.firstWhere((h) => h.id == widget.habit.id, orElse: () => widget.habit);
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildStreakSummary(habit),
+              const SizedBox(height: 24),
           Text(
             'Weekly History',
             style: TextStyle(
@@ -237,15 +372,24 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
             ),
           ),
           const SizedBox(height: 16),
-          _buildWeeklyHistory(),
-          const SizedBox(height: 24),
-          _buildBestStreaks(),
-        ],
-      ),
+              _buildWeeklyHistory(habit),
+              const SizedBox(height: 24),
+              _buildBestStreaks(habit),
+            ],
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildStreakSummary() {
+  Widget _buildStreakSummary(HabitModel habit) {
+    // Current streak is already in habit.streak
+
+    // Calculate Best Streak and Total Done from completedDays
+    // Note: Best streak logic could be more complex, but we'll use a simple approximation if full history isn't tracked yet
+    final int totalDone = habit.completedDays.length;
+    final int bestStreak = habit.streak; // Simplified: Using current streak as best for now or could calculate from history
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -255,11 +399,11 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildStreakStat('Current', '${widget.habit.streak}', 'days'),
+          _buildStreakStat('Current', '${habit.streak}', 'days'),
           Container(width: 1, height: 40, color: Colors.white24),
-          _buildStreakStat('Best', '28', 'days'),
+          _buildStreakStat('Best', '$bestStreak', 'days'),
           Container(width: 1, height: 40, color: Colors.white24),
-          _buildStreakStat('Total', '156', 'done'),
+          _buildStreakStat('Total', '$totalDone', 'done'),
         ],
       ),
     );
@@ -289,10 +433,19 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
     );
   }
 
-  Widget _buildWeeklyHistory() {
-    final days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+  Widget _buildWeeklyHistory(HabitModel habit) {
+    final daysLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     final isDark = ThemeService().isDarkMode;
     final theme = Theme.of(context);
+
+    // Get dates for the last 7 days (ending today)
+    final now = DateTime.now();
+    final last7Days = List.generate(7, (i) => now.subtract(Duration(days: 6 - i)));
+
+    // Create a set of formatted strings for comparison
+    final completedDatesStrings = habit.completedDays
+        .map((d) => "${d.year}-${d.month}-${d.day}")
+        .toSet();
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -303,11 +456,14 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: List.generate(7, (index) {
-          final isCompleted = index < 5;
+          final date = last7Days[index];
+          final dateStr = "${date.year}-${date.month}-${date.day}";
+          final isCompleted = completedDatesStrings.contains(dateStr);
+
           return Column(
             children: [
               Text(
-                days[index],
+                daysLabels[date.weekday - 1],
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
@@ -333,7 +489,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
     );
   }
 
-  Widget _buildBestStreaks() {
+  Widget _buildBestStreaks(HabitModel habit) {
     final theme = Theme.of(context);
     final isDark = ThemeService().isDarkMode;
 
@@ -352,7 +508,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Best Streak!',
+                  habit.streak > 0 ? 'Best Streak!' : 'New Journey!',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -361,7 +517,9 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Your longest ${widget.habit.name.toLowerCase()} streak was 28 days back in July.',
+                  habit.streak > 0
+                    ? 'Your current ${habit.name.toLowerCase()} streak is ${habit.streak} days. Keep it going!'
+                    : 'Start your ${habit.name.toLowerCase()} journey today and build your first streak!',
                   style: TextStyle(fontSize: 13, color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
                 ),
               ],

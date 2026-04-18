@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../utils/constants.dart';
 import '../../services/theme_service.dart';
+import '../../services/auth_service.dart';
 
 class EmailSettingsScreen extends StatefulWidget {
   const EmailSettingsScreen({super.key});
@@ -10,8 +11,14 @@ class EmailSettingsScreen extends StatefulWidget {
 }
 
 class _EmailSettingsScreenState extends State<EmailSettingsScreen> {
-  final TextEditingController _emailController = TextEditingController(text: 'alex.flow@example.com');
+  late final TextEditingController _emailController;
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _emailController = TextEditingController(text: AuthService().user?.email ?? '');
+  }
 
   @override
   Widget build(BuildContext context) {

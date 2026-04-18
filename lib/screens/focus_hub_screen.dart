@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 import '../services/theme_service.dart';
-import '../services/mock_data_service.dart';
+import '../services/database_service.dart';
+import '../services/ai_service.dart';
 import '../models/habit_model.dart';
 import '../models/music_model.dart';
-import '../widgets/shared/signed_in_badge.dart';
 
 class FocusHubScreen extends StatefulWidget {
   const FocusHubScreen({super.key});
@@ -16,51 +16,86 @@ class FocusHubScreen extends StatefulWidget {
 class _FocusHubScreenState extends State<FocusHubScreen> {
   HabitModel? _selectedHabit;
   MusicModel? _selectedMusic;
+  List<MusicModel> _musicTracks = [];
   bool _isFocusing = false;
   double _focusProgress = 0.0;
+  String? _pepTalk;
 
   @override
   void initState() {
     super.initState();
-    if (MockDataService.habits.isNotEmpty) {
-      _selectedHabit = MockDataService.habits.first;
-      if (_selectedHabit!.musicId != null) {
-        _selectedMusic = MockDataService.musicTracks.firstWhere(
-          (m) => m.id == _selectedHabit!.musicId,
-          orElse: () => MockDataService.musicTracks.first,
-        );
-      } else {
-        _selectedMusic = MockDataService.musicTracks.first;
-      }
+    _loadInitialData();
+  }
+
+  Future<void> _loadInitialData() async {
+    final music = await DatabaseService().getMusicTracks();
+
+    // Get habits from stream - wait for first non-empty list if possible
+    final habits = await DatabaseService().habitsStream.first;
+
+    if (mounted) {
+      setState(() {
+        _musicTracks = music;
+        if (habits.isNotEmpty) {
+          _selectedHabit = habits.first;
+          if (_selectedHabit!.musicId != null && _musicTracks.isNotEmpty) {
+            // Match by id (could be UUID from Supabase or string ID from FreeToUse)
+            _selectedMusic = _musicTracks.firstWhere(
+              (m) => m.id == _selectedHabit!.musicId,
+              orElse: () => _musicTracks.first,
+            );
+          } else if (_musicTracks.isNotEmpty) {
+            _selectedMusic = _musicTracks.first;
+          }
+        } else if (_musicTracks.isNotEmpty) {
+          _selectedMusic = _musicTracks.first;
+        }
+      });
     }
   }
 
-  void _toggleFocus() {
+  void _toggleFocus() async {
+    final wasFocusing = _isFocusing;
     setState(() {
       _isFocusing = !_isFocusing;
       if (_isFocusing) {
         _focusProgress = 0.45; // Simulating some progress
+        _pepTalk = null;
       } else {
         _focusProgress = 0.0;
+        _pepTalk = null;
       }
     });
+
+    if (!wasFocusing && _selectedHabit != null) {
+      final talk = await AIService().getPepTalk(_selectedHabit!);
+      if (mounted && _isFocusing) {
+        setState(() {
+          _pepTalk = talk;
+        });
+      }
+    }
+
+    if (_isFocusing && _selectedMusic?.url != null) {
+      debugPrint('Simulating playing track: ${_selectedMusic!.title} from ${_selectedMusic!.url}');
+    }
   }
 
   void _nextTrack() {
-    if (_selectedMusic == null) return;
-    final currentIndex = MockDataService.musicTracks.indexWhere((m) => m.id == _selectedMusic!.id);
-    final nextIndex = (currentIndex + 1) % MockDataService.musicTracks.length;
+    if (_selectedMusic == null || _musicTracks.isEmpty) return;
+    final currentIndex = _musicTracks.indexWhere((m) => m.id == _selectedMusic!.id);
+    final nextIndex = (currentIndex + 1) % _musicTracks.length;
     setState(() {
-      _selectedMusic = MockDataService.musicTracks[nextIndex];
+      _selectedMusic = _musicTracks[nextIndex];
     });
   }
 
   void _previousTrack() {
-    if (_selectedMusic == null) return;
-    final currentIndex = MockDataService.musicTracks.indexWhere((m) => m.id == _selectedMusic!.id);
-    final prevIndex = (currentIndex - 1 + MockDataService.musicTracks.length) % MockDataService.musicTracks.length;
+    if (_selectedMusic == null || _musicTracks.isEmpty) return;
+    final currentIndex = _musicTracks.indexWhere((m) => m.id == _selectedMusic!.id);
+    final prevIndex = (currentIndex - 1 + _musicTracks.length) % _musicTracks.length;
     setState(() {
-      _selectedMusic = MockDataService.musicTracks[prevIndex];
+      _selectedMusic = _musicTracks[prevIndex];
     });
   }
 
@@ -94,8 +129,6 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
       appBar: AppBar(
         title: const Text('Focus Hub'),
         actions: [
-          const SignedInBadge(),
-          const SizedBox(width: 8),
           IconButton(
             onPressed: _showInfoDialog,
             icon: const Icon(Icons.info_outline_rounded, color: AppColors.primary),
@@ -180,7 +213,7 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
                 children: [
                   Text(
                     _selectedHabit != null
-                        ? MockDataService.mascotToEmoji(_selectedHabit!.mascot)
+                        ? HabitModel.mascotToEmoji(_selectedHabit!.mascot)
                         : '🧘',
                     style: const TextStyle(fontSize: 80),
                   ),
@@ -196,6 +229,12 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
                     ),
                 ],
               ),
+              if (_pepTalk != null && _isFocusing)
+                Positioned(
+                  top: -20,
+                  right: 0,
+                  child: _buildPepTalkBubble(),
+                ),
             ],
           ),
           const SizedBox(height: 32),
@@ -244,58 +283,64 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
   Widget _buildHabitSelector() {
     final theme = Theme.of(context);
 
-    return SizedBox(
-      height: 100,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: MockDataService.habits.length,
-        itemBuilder: (context, index) {
-          final habit = MockDataService.habits[index];
-          final isSelected = _selectedHabit?.id == habit.id;
-          return GestureDetector(
-            onTap: () {
-              setState(() {
-                _selectedHabit = habit;
-                if (habit.musicId != null) {
-                  _selectedMusic = MockDataService.musicTracks.firstWhere(
-                    (m) => m.id == habit.musicId,
-                    orElse: () => _selectedMusic!,
-                  );
-                }
-              });
+    return StreamBuilder<List<HabitModel>>(
+      stream: DatabaseService().habitsStream,
+      builder: (context, snapshot) {
+        final habits = snapshot.data ?? [];
+        return SizedBox(
+          height: 100,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: habits.length,
+            itemBuilder: (context, index) {
+              final habit = habits[index];
+              final isSelected = _selectedHabit?.id == habit.id;
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedHabit = habit;
+                    if (habit.musicId != null && _musicTracks.isNotEmpty) {
+                      _selectedMusic = _musicTracks.firstWhere(
+                        (m) => m.id == habit.musicId,
+                        orElse: () => _selectedMusic!,
+                      );
+                    }
+                  });
+                },
+                child: Container(
+                  width: 80,
+                  margin: const EdgeInsets.only(right: 16),
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppColors.primary : theme.cardTheme.color,
+                    borderRadius: BorderRadius.circular(24),
+                    border: isSelected ? Border.all(color: AppColors.primary, width: 2) : null,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        HabitModel.mascotToEmoji(habit.mascot),
+                        style: const TextStyle(fontSize: 32),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        habit.name,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: isSelected ? Colors.white : theme.colorScheme.onSurface,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              );
             },
-            child: Container(
-              width: 80,
-              margin: const EdgeInsets.only(right: 16),
-              decoration: BoxDecoration(
-                color: isSelected ? AppColors.primary : theme.cardTheme.color,
-                borderRadius: BorderRadius.circular(24),
-                border: isSelected ? Border.all(color: AppColors.primary, width: 2) : null,
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    MockDataService.mascotToEmoji(habit.mascot),
-                    style: const TextStyle(fontSize: 32),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    habit.name,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: isSelected ? Colors.white : theme.colorScheme.onSurface,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -380,6 +425,33 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildPepTalkBubble() {
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 140),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Text(
+        _pepTalk!,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
+        textAlign: TextAlign.center,
+      ),
     );
   }
 

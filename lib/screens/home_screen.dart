@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 import '../services/theme_service.dart';
-import '../services/mock_data_service.dart';
+import '../services/database_service.dart';
 import '../models/habit_model.dart';
 import 'habit_detail_screen.dart';
 import 'settings_screen.dart';
 import 'focus_hub_screen.dart';
-import '../widgets/shared/signed_in_badge.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -21,8 +20,6 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Sanctuary'),
         actions: [
-          const SignedInBadge(),
-          const SizedBox(width: 8),
           IconButton(
             onPressed: () {
               Navigator.push(
@@ -117,11 +114,15 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildDailyProgress() {
-    final completedCount = MockDataService.habits.where((h) => h.isCompletedToday).length;
-    final totalCount = MockDataService.habits.length;
-    final progress = totalCount > 0 ? completedCount / totalCount : 0.0;
+    return StreamBuilder<List<HabitModel>>(
+      stream: DatabaseService().habitsStream,
+      builder: (context, snapshot) {
+        final habits = snapshot.data ?? [];
+        final completedCount = habits.where((h) => h.isCompletedToday).length;
+        final totalCount = habits.length;
+        final progress = totalCount > 0 ? completedCount / totalCount : 0.0;
 
-    return Container(
+        return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: AppColors.primary,
@@ -195,22 +196,49 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
     );
+      },
+    );
   }
 
   Widget _buildHabitsGrid(BuildContext context) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 0.8,
-      ),
-      itemCount: MockDataService.habits.length,
-      itemBuilder: (context, index) {
-        final habit = MockDataService.habits[index];
-        return _buildHabitMascotCard(context, habit);
+    return StreamBuilder<List<HabitModel>>(
+      stream: DatabaseService().habitsStream,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Failed to load habits.',
+              style: TextStyle(color: ThemeService().isDarkMode ? AppColors.darkTextSecondary : AppColors.textGrey),
+            ),
+          );
+        }
+        final habits = snapshot.data ?? [];
+        if (habits.isEmpty) {
+          return Center(
+            child: Text(
+              'No habits yet. Add one to start!',
+              style: TextStyle(color: ThemeService().isDarkMode ? AppColors.darkTextSecondary : AppColors.textGrey),
+            ),
+          );
+        }
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 0.8,
+          ),
+          itemCount: habits.length,
+          itemBuilder: (context, index) {
+            final habit = habits[index];
+            return _buildHabitMascotCard(context, habit);
+          },
+        );
       },
     );
   }
@@ -219,6 +247,19 @@ class HomeScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = ThemeService().isDarkMode;
     return GestureDetector(
+      onDoubleTap: () async {
+        if (!habit.isCompletedToday) {
+          await DatabaseService().completeHabit(habit.id);
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('${habit.name} completed! +50 XP'),
+                duration: const Duration(seconds: 1),
+              ),
+            );
+          }
+        }
+      },
       onTap: () {
         Navigator.push(
           context,
@@ -257,7 +298,7 @@ class HomeScreen extends StatelessWidget {
             ),
             const Spacer(),
             Text(
-              MockDataService.mascotToEmoji(habit.mascot),
+              HabitModel.mascotToEmoji(habit.mascot),
               style: const TextStyle(fontSize: 48),
             ),
             const Spacer(),

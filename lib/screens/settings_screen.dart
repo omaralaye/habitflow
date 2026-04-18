@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 import '../services/theme_service.dart';
+import '../services/auth_service.dart';
 import 'onboarding_screen.dart';
+import '../services/notification_service.dart';
 import 'settings/quiet_hours_screen.dart';
 import 'settings/email_settings_screen.dart';
 import 'settings/security_settings_screen.dart';
 import 'settings/privacy_policy_screen.dart';
 import 'settings/terms_of_service_screen.dart';
-import '../widgets/shared/signed_in_badge.dart';
-import '../services/auth_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -34,10 +34,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           onPressed: () => Navigator.pop(context),
           icon: Icon(Icons.arrow_back_rounded, color: theme.appBarTheme.titleTextStyle?.color),
         ),
-        actions: [
-          const SignedInBadge(),
-          const SizedBox(width: 16),
-        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -127,7 +123,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _buildSettingItem(
                 Icons.email_rounded,
                 'EMAIL ADDRESS',
-                'alex.flow@example.com',
+                AuthService().user?.email ?? 'Not signed in',
                 onTap: () {
                   Navigator.push(
                     context,
@@ -314,20 +310,53 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  Future<void> _handleSignOut() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Sign Out'),
+        content: const Text('Are you sure you want to sign out of your sanctuary?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel', style: TextStyle(color: AppColors.textGrey)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Sign Out', style: TextStyle(color: AppColors.accentRed, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      try {
+        await NotificationService().cancelAllNotifications();
+        await AuthService().signOut();
+        if (mounted) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+            (route) => false,
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error signing out: $e')),
+          );
+        }
+      }
+    }
+  }
+
   Widget _buildSignOutButton(BuildContext context) {
     final isDark = ThemeService().isDarkMode;
     return SizedBox(
       width: double.infinity,
       height: 60,
       child: ElevatedButton(
-        onPressed: () {
-          AuthService().signOut();
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (_) => const OnboardingScreen()),
-            (route) => false,
-          );
-        },
+        onPressed: _handleSignOut,
         style: ElevatedButton.styleFrom(
           backgroundColor: isDark ? AppColors.darkSurface : AppColors.primaryLighter.withOpacity(0.5),
           foregroundColor: AppColors.accentRed,

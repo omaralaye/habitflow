@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 import '../services/theme_service.dart';
-import '../services/mock_data_service.dart';
 import '../services/database_service.dart';
 import '../models/habit_model.dart';
 import 'add_habit_screen.dart';
 import 'habit_detail_screen.dart';
-import '../widgets/shared/signed_in_badge.dart';
 
 class HabitListScreen extends StatelessWidget {
   const HabitListScreen({super.key});
@@ -21,8 +19,6 @@ class HabitListScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('My Habits'),
         actions: [
-          const SignedInBadge(),
-          const SizedBox(width: 8),
           IconButton(
             onPressed: () {
               Navigator.push(
@@ -42,26 +38,51 @@ class HabitListScreen extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(
+              child: Text(
+                'Something went wrong. Please try again.',
+                style: TextStyle(color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
+              ),
+            );
           }
           final habits = snapshot.data ?? [];
           if (habits.isEmpty) {
-            return const Center(child: Text('No habits found. Add your first habit!'));
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.list_alt_rounded, size: 64, color: isDark ? AppColors.darkSurface : AppColors.primaryLighter),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No habits found.',
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Start your journey by adding one!',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDark ? AppColors.darkTextSecondary.withOpacity(0.7) : AppColors.textGrey.withOpacity(0.7),
+                    ),
+                  ),
+                ],
+              ),
+            );
           }
 
-          final categories = habits.map((h) => h.category).toSet().toList();
+          final categories = habits.map((h) => h.category).toSet().toList()..sort();
 
           return ListView.separated(
             padding: const EdgeInsets.all(24),
             itemCount: categories.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 24),
+            separatorBuilder: (context, index) => const SizedBox(height: 24),
             itemBuilder: (context, index) {
               final category = categories[index];
-              return _buildCategorySection(
-                context,
-                category,
-                habits.where((h) => h.category == category).toList(),
-              );
+              final categoryHabits = habits.where((h) => h.category == category).toList();
+              return _buildCategorySection(context, category, categoryHabits);
             },
           );
         },
@@ -123,12 +144,12 @@ class HabitListScreen extends StatelessWidget {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: isDark ? AppColors.darkSurface : MockDataService.getPastelColorForMascot(habit.mascot),
+                color: isDark ? AppColors.darkSurface : HabitModel.getPastelColorForMascot(habit.mascot),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Center(
                 child: Text(
-                  MockDataService.mascotToEmoji(habit.mascot),
+                  HabitModel.mascotToEmoji(habit.mascot),
                   style: const TextStyle(fontSize: 28),
                 ),
               ),

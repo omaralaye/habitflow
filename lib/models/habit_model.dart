@@ -15,13 +15,41 @@ class HabitModel {
   final String name;
   final Color color;
   final int streak;
-  final List<int> completedDays;
+  final List<DateTime> completedDays;
   final MascotType mascot;
   final int mascotLevel;
   final int progress; // percentage 0-100
   final String category;
   final bool isCompletedToday;
   final String? musicId;
+  final bool startReminderEnabled;
+  final TimeOfDay? startReminderTime;
+  final bool endReminderEnabled;
+  final TimeOfDay? endReminderTime;
+
+  static String mascotToEmoji(MascotType type) {
+    switch (type) {
+      case MascotType.panda: return '🐼';
+      case MascotType.penguin: return '🐧';
+      case MascotType.koala: return '🐨';
+      case MascotType.fox: return '🦊';
+      case MascotType.cat: return '🐱';
+      case MascotType.dog: return '🐶';
+      case MascotType.bear: return '🐻';
+    }
+  }
+
+  static Color getPastelColorForMascot(MascotType type) {
+    switch (type) {
+      case MascotType.panda: return const Color(0xFFF3E5F5);
+      case MascotType.penguin: return const Color(0xFFE3F2FD);
+      case MascotType.koala: return const Color(0xFFE0F2F1);
+      case MascotType.fox: return const Color(0xFFFFF3E0);
+      case MascotType.cat: return const Color(0xFFFCE4EC);
+      case MascotType.dog: return const Color(0xFFF1F8E9);
+      case MascotType.bear: return const Color(0xFFEFEBE9);
+    }
+  }
 
   HabitModel({
     required this.id,
@@ -35,6 +63,10 @@ class HabitModel {
     this.category = 'General',
     this.isCompletedToday = false,
     this.musicId,
+    this.startReminderEnabled = false,
+    this.startReminderTime,
+    this.endReminderEnabled = true,
+    this.endReminderTime,
   });
 
   HabitModel copyWith({
@@ -42,13 +74,17 @@ class HabitModel {
     String? name,
     Color? color,
     int? streak,
-    List<int>? completedDays,
+    List<DateTime>? completedDays,
     MascotType? mascot,
     int? mascotLevel,
     int? progress,
     String? category,
     bool? isCompletedToday,
     String? musicId,
+    bool? startReminderEnabled,
+    TimeOfDay? startReminderTime,
+    bool? endReminderEnabled,
+    TimeOfDay? endReminderTime,
   }) {
     return HabitModel(
       id: id ?? this.id,
@@ -62,6 +98,10 @@ class HabitModel {
       category: category ?? this.category,
       isCompletedToday: isCompletedToday ?? this.isCompletedToday,
       musicId: musicId ?? this.musicId,
+      startReminderEnabled: startReminderEnabled ?? this.startReminderEnabled,
+      startReminderTime: startReminderTime ?? this.startReminderTime,
+      endReminderEnabled: endReminderEnabled ?? this.endReminderEnabled,
+      endReminderTime: endReminderTime ?? this.endReminderTime,
     );
   }
 }

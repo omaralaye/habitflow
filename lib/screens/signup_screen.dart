@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 import '../services/theme_service.dart';
-import '../services/auth_service.dart';
 import 'login_screen.dart';
-import '../widgets/main_navigation.dart';
+import '../utils/navigation_helper.dart';
+import '../services/auth_service.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -36,22 +36,24 @@ class _SignupScreenState extends State<SignupScreen> {
       setState(() => _isLoading = true);
       try {
         await AuthService().signUp(
-          _emailController.text,
+          _emailController.text.trim(),
           _passwordController.text,
-          name: _nameController.text,
+          name: _nameController.text.trim(),
           emoji: _selectedEmoji,
         );
         if (mounted) {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (_) => const MainNavigation()),
-            (route) => false,
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Signup successful')),
           );
+          await NavigationHelper.navigateAfterAuth(context);
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Signup failed: ${e.toString()}')),
+            SnackBar(
+              content: Text('Signup failed: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
           );
         }
       } finally {
@@ -62,28 +64,28 @@ class _SignupScreenState extends State<SignupScreen> {
 
   Future<void> _handleGoogleSignup() async {
     setState(() => _isLoading = true);
-    await AuthService().signInWithGoogle();
-    setState(() => _isLoading = false);
+    // Mock Google signup for now
+    await Future.delayed(const Duration(seconds: 1));
     if (mounted) {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const MainNavigation()),
-        (route) => false,
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Google signup successful (mock)')),
       );
+      await NavigationHelper.navigateAfterAuth(context);
     }
+    if (mounted) setState(() => _isLoading = false);
   }
 
   Future<void> _handleAppleSignup() async {
     setState(() => _isLoading = true);
-    await AuthService().signInWithApple();
-    setState(() => _isLoading = false);
+    // Mock Apple signup for now
+    await Future.delayed(const Duration(seconds: 1));
     if (mounted) {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const MainNavigation()),
-        (route) => false,
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Apple signup successful (mock)')),
       );
+      await NavigationHelper.navigateAfterAuth(context);
     }
+    if (mounted) setState(() => _isLoading = false);
   }
 
   @override
@@ -109,6 +111,22 @@ class _SignupScreenState extends State<SignupScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    const SizedBox(height: 20),
+                    Center(
+                      child: Container(
+                        width: 80,
+                        height: 80,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: isDark ? AppColors.darkSurface : AppColors.primaryLighter,
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Image.asset(
+                          'assets/images/logo.png',
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 20),
                     Center(
                       child: Container(
@@ -164,15 +182,19 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                     ),
                     const SizedBox(height: 40),
-                    Text(
-                      'Join Sanctuary',
-                      style: theme.textTheme.displayLarge?.copyWith(fontSize: 32),
+                    Center(
+                      child: Text(
+                        'Join Sanctuary',
+                        style: theme.textTheme.displayLarge?.copyWith(fontSize: 32),
+                      ),
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      'Start your journey towards a better you.',
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey,
+                    Center(
+                      child: Text(
+                        'Start your journey towards a better you.',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 40),

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:habitflow/screens/onboarding_screen.dart';
-import 'package:habitflow/screens/signup_screen.dart';
-import 'package:habitflow/screens/login_screen.dart';
+import 'package:sanctuary/screens/onboarding_screen.dart';
+import 'package:sanctuary/screens/signup_screen.dart';
+import 'package:sanctuary/screens/login_screen.dart';
 
 void main() {
   testWidgets('OnboardingScreen has 3 pages and navigates to SignupScreen', (WidgetTester tester) async {

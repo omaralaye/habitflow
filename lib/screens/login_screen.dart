@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 import '../services/theme_service.dart';
-import '../services/auth_service.dart';
 import 'signup_screen.dart';
-import '../widgets/main_navigation.dart';
+import '../utils/navigation_helper.dart';
+import '../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,7 +18,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _isLoading = false;
-  final String _loginEmoji = '🐢'; // Adding a friendly emoji for login
 
   @override
   void dispose() {
@@ -31,18 +30,23 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       try {
-        await AuthService().signIn(_emailController.text, _passwordController.text);
+        await AuthService().signIn(
+          _emailController.text.trim(),
+          _passwordController.text,
+        );
         if (mounted) {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (_) => const MainNavigation()),
-            (route) => false,
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Login successful')),
           );
+          await NavigationHelper.navigateAfterAuth(context);
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Login failed: ${e.toString()}')),
+            SnackBar(
+              content: Text('Login failed: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
           );
         }
       } finally {
@@ -53,28 +57,28 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handleGoogleLogin() async {
     setState(() => _isLoading = true);
-    await AuthService().signInWithGoogle();
-    setState(() => _isLoading = false);
+    // Mock Google login for now
+    await Future.delayed(const Duration(seconds: 1));
     if (mounted) {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const MainNavigation()),
-        (route) => false,
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Google login successful (mock)')),
       );
+      await NavigationHelper.navigateAfterAuth(context);
     }
+    if (mounted) setState(() => _isLoading = false);
   }
 
   Future<void> _handleAppleLogin() async {
     setState(() => _isLoading = true);
-    await AuthService().signInWithApple();
-    setState(() => _isLoading = false);
+    // Mock Apple login for now
+    await Future.delayed(const Duration(seconds: 1));
     if (mounted) {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const MainNavigation()),
-        (route) => false,
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Apple login successful (mock)')),
       );
+      await NavigationHelper.navigateAfterAuth(context);
     }
+    if (mounted) setState(() => _isLoading = false);
   }
 
   @override
@@ -103,30 +107,33 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 20),
                     Center(
                       child: Container(
-                        width: 100,
-                        height: 100,
+                        width: 80,
+                        height: 80,
+                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: isDark ? AppColors.darkSurface : AppColors.primaryLighter,
-                          borderRadius: BorderRadius.circular(30),
+                          borderRadius: BorderRadius.circular(24),
                         ),
-                        child: Center(
-                          child: Text(
-                            _loginEmoji,
-                            style: const TextStyle(fontSize: 50),
-                          ),
+                        child: Image.asset(
+                          'assets/images/logo.png',
+                          fit: BoxFit.contain,
                         ),
                       ),
                     ),
                     const SizedBox(height: 40),
-                    Text(
-                      'Welcome Back',
-                      style: theme.textTheme.displayLarge?.copyWith(fontSize: 32),
+                    Center(
+                      child: Text(
+                        'Welcome Back',
+                        style: theme.textTheme.displayLarge?.copyWith(fontSize: 32),
+                      ),
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      'Log in to continue your journey.',
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey,
+                    Center(
+                      child: Text(
+                        'Log in to continue your journey.',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 40),

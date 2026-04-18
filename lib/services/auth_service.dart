@@ -2,13 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthService extends ChangeNotifier {
-  static final AuthService _instance = AuthService._internal();
-  factory AuthService() => _instance;
+  static AuthService? _instance;
+  static AuthService get instance {
+    _instance ??= AuthService._internal();
+    return _instance!;
+  }
+
+  // Use a factory for backward compatibility or for general use.
+  factory AuthService() => instance;
+
   AuthService._internal() {
     _supabase.auth.onAuthStateChange.listen((data) {
       _user = data.session?.user;
       notifyListeners();
     });
+  }
+
+  // Allow for injection in tests.
+  @visibleForTesting
+  static void setMockInstance(AuthService mock) {
+    _instance = mock;
   }
 
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -27,16 +40,14 @@ class AuthService extends ChangeNotifier {
 
   Future<void> signUp(String email, String password, {String? name, String? emoji}) async {
     try {
-      final AuthResponse response = await _supabase.auth.signUp(email: email, password: password);
-      if (response.user != null) {
-        await _supabase.from('profiles').insert({
-          'id': response.user!.id,
-          'name': name ?? '',
-          'email': email,
+      await _supabase.auth.signUp(
+        email: email,
+        password: password,
+        data: {
+          'full_name': name ?? '',
           'emoji': emoji ?? '🦊',
-          'created_at': DateTime.now().toIso8601String(),
-        });
-      }
+        },
+      );
     } catch (e) {
       rethrow;
     }

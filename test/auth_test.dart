@@ -1,10 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:habitflow/screens/login_screen.dart';
-import 'package:habitflow/screens/signup_screen.dart';
-import 'package:habitflow/widgets/main_navigation.dart';
+import 'package:sanctuary/screens/login_screen.dart';
+import 'package:sanctuary/screens/signup_screen.dart';
+import 'package:sanctuary/widgets/main_navigation.dart';
+import 'package:sanctuary/services/auth_service.dart';
+import 'package:sanctuary/services/database_service.dart';
+import 'package:mocktail/mocktail.dart';
+
+class MockAuthService extends Mock implements AuthService {}
+class MockDatabaseService extends Mock implements DatabaseService {}
 
 void main() {
+  late MockAuthService mockAuthService;
+  late MockDatabaseService mockDatabaseService;
+
+  setUp(() {
+    mockAuthService = MockAuthService();
+    AuthService.setMockInstance(mockAuthService);
+
+    mockDatabaseService = MockDatabaseService();
+    DatabaseService.setMockInstance(mockDatabaseService);
+
+    // Default mock behaviors
+    when(() => mockAuthService.signIn(any(), any())).thenAnswer((_) async {});
+    when(() => mockAuthService.signUp(any(), any(), name: any(named: 'name'), emoji: any(named: 'emoji')))
+        .thenAnswer((_) async {});
+    when(() => mockDatabaseService.hasHabits()).thenAnswer((_) async => true);
+    when(() => mockDatabaseService.habitsStream).thenAnswer((_) => Stream.value([]));
+  });
+
   group('LoginScreen Tests', () {
     testWidgets('LoginScreen shows form fields and buttons', (WidgetTester tester) async {
       await tester.pumpWidget(const MaterialApp(home: LoginScreen()));
@@ -37,6 +61,7 @@ void main() {
       await tester.tap(find.text('Log In'));
       await tester.pumpAndSettle();
 
+      verify(() => mockAuthService.signIn('test@example.com', 'password123')).called(1);
       expect(find.byType(MainNavigation), findsOneWidget);
     });
   });
@@ -77,6 +102,12 @@ void main() {
       await tester.tap(find.text('Sign Up'));
       await tester.pumpAndSettle();
 
+      verify(() => mockAuthService.signUp(
+        'test@example.com',
+        'password123',
+        name: 'John Doe',
+        emoji: any(named: 'emoji')
+      )).called(1);
       expect(find.byType(MainNavigation), findsOneWidget);
     });
   });
