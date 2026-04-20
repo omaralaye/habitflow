@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import '../utils/error_handler.dart';
 import '../models/music_model.dart';
 import '../utils/constants.dart';
+import '../utils/rate_limiter.dart';
 
 class MusicService {
   static final MusicService _instance = MusicService._internal();
@@ -11,6 +12,7 @@ class MusicService {
 
   Future<ServiceResult<List<MusicModel>>> fetchFreeToUseMusic({int limit = 100}) async {
     try {
+      return await RateLimiter.music.run('fetchFreeToUseMusic', () async {
       final response = await http.get(
         Uri.parse('${MusicConstants.BASE_DATA_URL}/music/tracks/all?limit=$limit&order=release_date'),
       );
@@ -88,6 +90,7 @@ class MusicService {
         }
       }
       return ServiceResult.success([]);
+      });
     } catch (e) {
       return ServiceResult.failure(e);
     }

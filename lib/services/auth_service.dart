@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/error_handler.dart';
+import '../utils/rate_limiter.dart';
 
 class AuthService extends ChangeNotifier {
   static AuthService? _instance;
@@ -33,8 +34,10 @@ class AuthService extends ChangeNotifier {
 
   Future<ServiceResult<void>> signIn(String email, String password) async {
     try {
-      await _supabase.auth.signInWithPassword(email: email, password: password);
-      return ServiceResult.success(null);
+      return await RateLimiter.auth.run('signIn_$email', () async {
+        await _supabase.auth.signInWithPassword(email: email, password: password);
+        return ServiceResult.success(null);
+      });
     } catch (e) {
       return ServiceResult.failure(e);
     }
@@ -42,15 +45,17 @@ class AuthService extends ChangeNotifier {
 
   Future<ServiceResult<void>> signUp(String email, String password, {String? name, String? emoji}) async {
     try {
-      await _supabase.auth.signUp(
-        email: email,
-        password: password,
-        data: {
-          'full_name': name ?? '',
-          'emoji': emoji ?? '🦊',
-        },
-      );
-      return ServiceResult.success(null);
+      return await RateLimiter.auth.run('signUp', () async {
+        await _supabase.auth.signUp(
+          email: email,
+          password: password,
+          data: {
+            'full_name': name ?? '',
+            'emoji': emoji ?? '🦊',
+          },
+        );
+        return ServiceResult.success(null);
+      });
     } catch (e) {
       return ServiceResult.failure(e);
     }
