@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:openai_dart/openai_dart.dart';
 import 'package:http/http.dart' as http;
 import 'rate_limiter.dart';
+import '../services/logger_service.dart';
 
 /// A standardized application error that provides safe, user-facing information.
 class AppError {
@@ -33,6 +34,8 @@ class AppError {
   /// Factory to handle various types of exceptions and return a structured AppError.
   factory AppError.handle(dynamic error) {
     if (error is AppError) return error;
+
+    LoggerService().error('Error handled by AppError', error: error);
 
     String message = 'An unexpected error occurred. Please try again later.';
     String code = 'INTERNAL_ERROR';

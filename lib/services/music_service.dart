@@ -4,6 +4,7 @@ import '../utils/error_handler.dart';
 import '../models/music_model.dart';
 import '../utils/constants.dart';
 import '../utils/rate_limiter.dart';
+import 'logger_service.dart';
 
 class MusicService {
   static final MusicService _instance = MusicService._internal();
@@ -86,12 +87,15 @@ class MusicService {
               url: url,
             );
           }).toList();
+          LoggerService().info('Fetched Free To Use Music', tag: 'MUSIC', data: {'count': tracks.length});
           return ServiceResult.success(tracks);
         }
       }
+      LoggerService().warning('Failed to fetch music or empty data', tag: 'MUSIC', data: {'statusCode': response.statusCode});
       return ServiceResult.success([]);
       });
     } catch (e) {
+      LoggerService().error('Error in fetchFreeToUseMusic', tag: 'MUSIC', error: e);
       return ServiceResult.failure(e);
     }
   }
