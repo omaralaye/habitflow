@@ -48,8 +48,9 @@ class MusicService {
             }
             if (track['tags'] is List) {
               for (var tag in track['tags']) {
-                if (tag is String) apiCategories.add(tag.toLowerCase());
-                else if (tag is List && tag.length > 1 && tag[1] is String) {
+                if (tag is String) {
+                  apiCategories.add(tag.toLowerCase());
+                } else if (tag is List && tag.length > 1 && tag[1] is String) {
                    apiCategories.add(tag[1].toLowerCase());
                 }
               }
