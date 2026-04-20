@@ -249,14 +249,23 @@ class HomeScreen extends StatelessWidget {
     return GestureDetector(
       onDoubleTap: () async {
         if (!habit.isCompletedToday) {
-          await DatabaseService().completeHabit(habit.id);
+          final result = await DatabaseService().completeHabit(habit.id);
           if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('${habit.name} completed! +50 XP'),
-                duration: const Duration(seconds: 1),
-              ),
-            );
+            if (result.isSuccess) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('${habit.name} completed! +50 XP'),
+                  duration: const Duration(seconds: 1),
+                ),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Failed to complete habit: ${result.error?.message}'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
           }
         }
       },

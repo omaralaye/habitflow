@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../utils/error_handler.dart';
 
 class AuthService extends ChangeNotifier {
   static AuthService? _instance;
@@ -30,15 +31,16 @@ class AuthService extends ChangeNotifier {
   bool get isSignedIn => _user != null;
   User? get user => _user;
 
-  Future<void> signIn(String email, String password) async {
+  Future<ServiceResult<void>> signIn(String email, String password) async {
     try {
       await _supabase.auth.signInWithPassword(email: email, password: password);
+      return ServiceResult.success(null);
     } catch (e) {
-      rethrow;
+      return ServiceResult.failure(e);
     }
   }
 
-  Future<void> signUp(String email, String password, {String? name, String? emoji}) async {
+  Future<ServiceResult<void>> signUp(String email, String password, {String? name, String? emoji}) async {
     try {
       await _supabase.auth.signUp(
         email: email,
@@ -48,8 +50,9 @@ class AuthService extends ChangeNotifier {
           'emoji': emoji ?? '🦊',
         },
       );
+      return ServiceResult.success(null);
     } catch (e) {
-      rethrow;
+      return ServiceResult.failure(e);
     }
   }
 

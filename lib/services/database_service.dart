@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../utils/error_handler.dart';
 import '../models/habit_model.dart';
 import '../models/music_model.dart';
 import 'music_service.dart';
@@ -63,61 +64,84 @@ class DatabaseService {
         });
   }
 
-  Future<HabitModel?> addHabit(HabitModel habit) async {
-    if (_uid == null) return null;
-    final habitData = _habitToSupabase(habit);
+  Future<ServiceResult<HabitModel?>> addHabit(HabitModel habit) async {
+    if (_uid == null) return ServiceResult.failure('Not authenticated');
 
-    // Ensure music_id is a valid UUID or null
-    if (habitData['music_id'] != null) {
-      final musicId = habitData['music_id'].toString();
-      if (musicId.length < 36) { // Basic check for non-UUID strings from mock data
-        habitData['music_id'] = null;
+    try {
+      final habitData = _habitToSupabase(habit);
+
+      // Ensure music_id is a valid UUID or null
+      if (habitData['music_id'] != null) {
+        final musicId = habitData['music_id'].toString();
+        if (musicId.length < 36) { // Basic check for non-UUID strings from mock data
+          habitData['music_id'] = null;
+        }
       }
+
+      final response = await _supabase.from('habits').insert({
+        ...habitData,
+        'user_id': _uid,
+      }).select().single();
+
+      return ServiceResult.success(_habitFromSupabase(response, []));
+    } catch (e) {
+      return ServiceResult.failure(e);
     }
-
-    final response = await _supabase.from('habits').insert({
-      ...habitData,
-      'user_id': _uid,
-    }).select().single();
-
-    return _habitFromSupabase(response, []);
   }
 
   Future<bool> hasHabits() async {
     if (_uid == null) return false;
-    final response = await _supabase
-        .from('habits')
-        .select('id')
-        .eq('user_id', _uid!)
-        .limit(1);
-    return (response as List).isNotEmpty;
-  }
-
-  Future<void> updateHabit(HabitModel habit) async {
-    if (_uid == null) return;
-    final habitData = _habitToSupabase(habit);
-
-    // Ensure music_id is a valid UUID or null
-    if (habitData['music_id'] != null) {
-      final musicId = habitData['music_id'].toString();
-      if (musicId.length < 36) { // Basic check for non-UUID strings from mock data
-        habitData['music_id'] = null;
-      }
+    try {
+      final response = await _supabase
+          .from('habits')
+          .select('id')
+          .eq('user_id', _uid!)
+          .limit(1);
+      return (response as List).isNotEmpty;
+    } catch (e) {
+      debugPrint('Error checking for habits: $e');
+      return false;
     }
-
-    await _supabase
-        .from('habits')
-        .update(habitData)
-        .eq('id', habit.id);
   }
 
-  Future<void> deleteHabit(String habitId) async {
-    if (_uid == null) return;
-    await _supabase.from('habits').delete().eq('id', habitId);
+  Future<ServiceResult<void>> updateHabit(HabitModel habit) async {
+    if (_uid == null) return ServiceResult.failure('Not authenticated');
+
+    try {
+      final habitData = _habitToSupabase(habit);
+
+      // Ensure music_id is a valid UUID or null
+      if (habitData['music_id'] != null) {
+        final musicId = habitData['music_id'].toString();
+        if (musicId.length < 36) { // Basic check for non-UUID strings from mock data
+          habitData['music_id'] = null;
+        }
+      }
+
+      await _supabase
+          .from('habits')
+          .update(habitData)
+          .eq('id', habit.id);
+      return ServiceResult.success(null);
+    } catch (e) {
+      return ServiceResult.failure(e);
+    }
   }
 
-  Future<void> completeHabit(String habitId) async {
-    if (_uid == null) return;
+  Future<ServiceResult<void>> deleteHabit(String habitId) async {
+    if (_uid == null) return ServiceResult.failure('Not authenticated');
+    try {
+      await _supabase.from('habits').delete().eq('id', habitId);
+      return ServiceResult.success(null);
+    } catch (e) {
+      return ServiceResult.failure(e);
+    }
+  }
+
+  Future<ServiceResult<void>> completeHabit(String habitId) async {
+    if (_uid == null) return ServiceResult.failure('Not authenticated');
+
+    try {
 
     final today = DateTime.now().toIso8601String().split('T')[0];
 
@@ -129,7 +153,7 @@ class DatabaseService {
         .eq('completed_at', today)
         .maybeSingle();
 
-    if (existingCompletion != null) return;
+    if (existingCompletion != null) return ServiceResult.success(null);
 
     // 1. Add completion record
     await _supabase.from('habit_completions').insert({
@@ -205,8 +229,12 @@ class DatabaseService {
       'level': currentLevel,
     }).eq('id', _uid!);
 
-    // 4. Check for milestones
-    await _checkAndAwardMilestones();
+      // 4. Check for milestones
+      await _checkAndAwardMilestones();
+      return ServiceResult.success(null);
+    } catch (e) {
+      return ServiceResult.failure(e);
+    }
   }
 
   Future<void> _checkAndAwardMilestones() async {
@@ -317,11 +345,11 @@ class DatabaseService {
     )).toList();
 
     // 2. Fetch from Free To Use API and merge
-    try {
-      final freeTracks = await MusicService().fetchFreeToUseMusic();
-      tracks.addAll(freeTracks);
-    } catch (e) {
-      debugPrint('Error merging Free To Use Music: $e');
+    final freeTracksResult = await MusicService().fetchFreeToUseMusic();
+    if (freeTracksResult.isSuccess) {
+      tracks.addAll(freeTracksResult.data ?? []);
+    } else {
+      debugPrint('Error merging Free To Use Music: ${freeTracksResult.error}');
     }
 
     return tracks;

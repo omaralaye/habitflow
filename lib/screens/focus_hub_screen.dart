@@ -68,10 +68,10 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
     });
 
     if (!wasFocusing && _selectedHabit != null) {
-      final talk = await AIService().getPepTalk(_selectedHabit!);
-      if (mounted && _isFocusing) {
+      final result = await AIService().getPepTalk(_selectedHabit!);
+      if (mounted && _isFocusing && result.isSuccess) {
         setState(() {
-          _pepTalk = talk;
+          _pepTalk = result.data;
         });
       }
     }
