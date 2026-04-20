@@ -5,6 +5,7 @@ import '../utils/error_handler.dart';
 import '../models/habit_model.dart';
 import '../utils/constants.dart';
 import '../utils/rate_limiter.dart';
+import 'logger_service.dart';
 
 class AIService {
   static final AIService _instance = AIService._internal();
@@ -34,10 +35,12 @@ class AIService {
       );
 
       final refinedName = response.choices.first.message.content?.trim();
+      LoggerService().info('Habit refined by AI', tag: 'AI', data: {'original': habitName, 'refined': refinedName});
       return ServiceResult.success(refinedName ?? habitName);
       });
     } catch (e) {
       if (e is RateLimitException) return ServiceResult.failure(e);
+      LoggerService().warning('AI habit refinement failed, using mock', tag: 'AI', error: e);
       // Fallback to mock logic if API fails or key is placeholder
       return ServiceResult.success(_mockRefineHabit(habitName));
     }
@@ -81,12 +84,20 @@ class AIService {
 
           final refined = data['refinedName']?.toString().trim();
 
+          LoggerService().info('Habit refined and categorized by AI', tag: 'AI', data: {
+            'original': habitName,
+            'refined': refined,
+            'category': category
+          });
+
           return ServiceResult.success({
             'refinedName': (refined != null && refined.isNotEmpty) ? refined : habitName,
             'category': category,
           });
         }
       }
+
+      LoggerService().warning('AI refineAndCategorize returned invalid JSON, falling back', tag: 'AI', data: {'content': content});
 
       // Fallback to separate calls if JSON parsing fails
       final refinedResult = await refineHabit(habitName);
@@ -99,6 +110,7 @@ class AIService {
       });
     } catch (e) {
       if (e is RateLimitException) return ServiceResult.failure(e);
+      LoggerService().warning('AI refineAndCategorize failed, using mock', tag: 'AI', error: e);
       return ServiceResult.success({
         'refinedName': _mockRefineHabit(habitName),
         'category': _mockRecommendCategory(habitName),

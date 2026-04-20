@@ -5,6 +5,7 @@ import '../models/habit_model.dart';
 import '../models/music_model.dart';
 import 'music_service.dart';
 import '../utils/rate_limiter.dart';
+import 'logger_service.dart';
 
 class DatabaseService {
   static DatabaseService? _instance;
@@ -27,7 +28,7 @@ class DatabaseService {
 
   Stream<List<HabitModel>> get habitsStream {
     if (_uid == null) {
-      debugPrint('habitsStream: _uid is null');
+      LoggerService().warning('habitsStream: _uid is null', tag: 'DB');
       return Stream.value([]);
     }
 
@@ -59,7 +60,7 @@ class DatabaseService {
             }
             return habits;
           } catch (e) {
-            debugPrint('Error in habitsStream: $e');
+            LoggerService().error('Error in habitsStream', tag: 'DB', error: e);
             return [];
           }
         });
@@ -85,9 +86,12 @@ class DatabaseService {
         'user_id': _uid,
       }).select().single();
 
-      return ServiceResult.success(_habitFromSupabase(response, []));
+      final newHabit = _habitFromSupabase(response, []);
+      LoggerService().action('Habit added', tag: 'DB', data: {'habitId': newHabit.id, 'name': newHabit.name});
+      return ServiceResult.success(newHabit);
       });
     } catch (e) {
+      LoggerService().error('Failed to add habit', tag: 'DB', error: e);
       return ServiceResult.failure(e);
     }
   }
@@ -102,7 +106,7 @@ class DatabaseService {
           .limit(1);
       return (response as List).isNotEmpty;
     } catch (e) {
-      debugPrint('Error checking for habits: $e');
+      LoggerService().error('Error checking for habits', tag: 'DB', error: e);
       return false;
     }
   }
@@ -125,8 +129,10 @@ class DatabaseService {
           .from('habits')
           .update(habitData)
           .eq('id', habit.id);
+      LoggerService().action('Habit updated', tag: 'DB', data: {'habitId': habit.id, 'name': habit.name});
       return ServiceResult.success(null);
     } catch (e) {
+      LoggerService().error('Failed to update habit', tag: 'DB', error: e, data: {'habitId': habit.id});
       return ServiceResult.failure(e);
     }
   }
@@ -135,8 +141,10 @@ class DatabaseService {
     if (_uid == null) return ServiceResult.failure('Not authenticated');
     try {
       await _supabase.from('habits').delete().eq('id', habitId);
+      LoggerService().action('Habit deleted', tag: 'DB', data: {'habitId': habitId});
       return ServiceResult.success(null);
     } catch (e) {
+      LoggerService().error('Failed to delete habit', tag: 'DB', error: e, data: {'habitId': habitId});
       return ServiceResult.failure(e);
     }
   }
@@ -215,6 +223,12 @@ class DatabaseService {
       'mascot_level': mascotLevel,
     }).eq('id', habitId);
 
+    LoggerService().action('Habit completed', tag: 'DB', data: {
+      'habitId': habitId,
+      'newStreak': currentStreak,
+      'newMascotLevel': mascotLevel
+    });
+
     // 3. Award XP to user
     final profileResponse = await _supabase.from('profiles').select('xp, level').eq('id', _uid!).single();
     int currentXp = profileResponse['xp'] as int? ?? 0;
@@ -237,6 +251,7 @@ class DatabaseService {
       return ServiceResult.success(null);
       });
     } catch (e) {
+      LoggerService().error('Failed to complete habit', tag: 'DB', error: e, data: {'habitId': habitId});
       return ServiceResult.failure(e);
     }
   }
@@ -286,6 +301,10 @@ class DatabaseService {
         await _supabase.from('user_milestones').insert({
           'user_id': _uid,
           'milestone_id': milestone['id'],
+        });
+        LoggerService().action('Milestone unlocked', tag: 'DB', data: {
+          'milestoneId': milestone['id'],
+          'name': milestone['name']
         });
       }
     }
@@ -353,7 +372,7 @@ class DatabaseService {
     if (freeTracksResult.isSuccess) {
       tracks.addAll(freeTracksResult.data ?? []);
     } else {
-      debugPrint('Error merging Free To Use Music: ${freeTracksResult.error}');
+      LoggerService().error('Error merging Free To Use Music', tag: 'DB', error: freeTracksResult.error);
     }
 
     return tracks;

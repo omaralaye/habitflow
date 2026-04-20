@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/error_handler.dart';
 import '../utils/rate_limiter.dart';
+import 'logger_service.dart';
 
 class AuthService extends ChangeNotifier {
   static AuthService? _instance;
@@ -36,9 +37,11 @@ class AuthService extends ChangeNotifier {
     try {
       return await RateLimiter.auth.run('signIn_$email', () async {
         await _supabase.auth.signInWithPassword(email: email, password: password);
+        LoggerService().action('User signed in', tag: 'AUTH', data: {'email': email});
         return ServiceResult.success(null);
       });
     } catch (e) {
+      LoggerService().error('Sign in failed', tag: 'AUTH', error: e, data: {'email': email});
       return ServiceResult.failure(e);
     }
   }
@@ -54,15 +57,19 @@ class AuthService extends ChangeNotifier {
             'emoji': emoji ?? '🦊',
           },
         );
+        LoggerService().action('User signed up', tag: 'AUTH', data: {'email': email, 'name': name});
         return ServiceResult.success(null);
       });
     } catch (e) {
+      LoggerService().error('Sign up failed', tag: 'AUTH', error: e, data: {'email': email});
       return ServiceResult.failure(e);
     }
   }
 
   Future<void> signOut() async {
+    final email = _user?.email;
     await _supabase.auth.signOut();
+    LoggerService().action('User signed out', tag: 'AUTH', data: {'email': email});
   }
 
   Future<void> signInWithGoogle() async {
