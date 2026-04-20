@@ -5,6 +5,7 @@ import 'package:sanctuary/screens/signup_screen.dart';
 import 'package:sanctuary/widgets/main_navigation.dart';
 import 'package:sanctuary/services/auth_service.dart';
 import 'package:sanctuary/services/database_service.dart';
+import 'package:sanctuary/utils/error_handler.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockAuthService extends Mock implements AuthService {}
@@ -22,9 +23,9 @@ void main() {
     DatabaseService.setMockInstance(mockDatabaseService);
 
     // Default mock behaviors
-    when(() => mockAuthService.signIn(any(), any())).thenAnswer((_) async {});
+    when(() => mockAuthService.signIn(any(), any())).thenAnswer((_) async => ServiceResult.success(null));
     when(() => mockAuthService.signUp(any(), any(), name: any(named: 'name'), emoji: any(named: 'emoji')))
-        .thenAnswer((_) async {});
+        .thenAnswer((_) async => ServiceResult.success(null));
     when(() => mockDatabaseService.hasHabits()).thenAnswer((_) async => true);
     when(() => mockDatabaseService.habitsStream).thenAnswer((_) => Stream.value([]));
   });

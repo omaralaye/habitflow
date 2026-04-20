@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:openai_dart/openai_dart.dart';
+import '../utils/error_handler.dart';
 import '../models/habit_model.dart';
 import '../utils/constants.dart';
 
@@ -12,7 +13,7 @@ class AIService {
   final OpenAIClient _client = OpenAIClient(apiKey: OpenAIConstants.OPENAI_API_KEY);
 
   /// Refines a habit name into something more actionable and specific using OpenAI.
-  Future<String> refineHabit(String habitName) async {
+  Future<ServiceResult<String>> refineHabit(String habitName) async {
     try {
       final response = await _client.createChatCompletion(
         request: CreateChatCompletionRequest(
@@ -31,15 +32,15 @@ class AIService {
       );
 
       final refinedName = response.choices.first.message.content?.trim();
-      return refinedName ?? habitName;
+      return ServiceResult.success(refinedName ?? habitName);
     } catch (e) {
       // Fallback to mock logic if API fails or key is placeholder
-      return _mockRefineHabit(habitName);
+      return ServiceResult.success(_mockRefineHabit(habitName));
     }
   }
 
   /// Refines a habit and recommends a category in a single AI call.
-  Future<Map<String, String>> refineAndCategorize(String habitName) async {
+  Future<ServiceResult<Map<String, String>>> refineAndCategorize(String habitName) async {
     const categories = ['Mindfulness', 'Health', 'Studying', 'Workout', 'Productivity', 'General'];
 
     try {
@@ -75,23 +76,26 @@ class AIService {
 
           final refined = data['refinedName']?.toString().trim();
 
-          return {
+          return ServiceResult.success({
             'refinedName': (refined != null && refined.isNotEmpty) ? refined : habitName,
             'category': category,
-          };
+          });
         }
       }
 
       // Fallback to separate calls if JSON parsing fails
-      return {
-        'refinedName': await refineHabit(habitName),
-        'category': await recommendCategory(habitName),
-      };
+      final refinedResult = await refineHabit(habitName);
+      final categoryResult = await recommendCategory(habitName);
+
+      return ServiceResult.success({
+        'refinedName': refinedResult.data ?? habitName,
+        'category': categoryResult.data ?? 'General',
+      });
     } catch (e) {
-      return {
+      return ServiceResult.success({
         'refinedName': _mockRefineHabit(habitName),
         'category': _mockRecommendCategory(habitName),
-      };
+      });
     }
   }
 
@@ -109,7 +113,7 @@ class AIService {
   }
 
   /// Recommends a category for a habit based on its name using OpenAI.
-  Future<String> recommendCategory(String habitName) async {
+  Future<ServiceResult<String>> recommendCategory(String habitName) async {
     const categories = ['Mindfulness', 'Health', 'Studying', 'Workout', 'Productivity', 'General'];
 
     try {
@@ -131,16 +135,16 @@ class AIService {
 
       final category = response.choices.first.message.content?.trim();
       if (category != null && categories.contains(category)) {
-        return category;
+        return ServiceResult.success(category);
       }
-      return _mockRecommendCategory(habitName);
+      return ServiceResult.success(_mockRecommendCategory(habitName));
     } catch (e) {
-      return _mockRecommendCategory(habitName);
+      return ServiceResult.success(_mockRecommendCategory(habitName));
     }
   }
 
   /// Generates a personalized insight from the mascot based on its personality using OpenAI.
-  Future<String> getMascotInsight(HabitModel habit) async {
+  Future<ServiceResult<String>> getMascotInsight(HabitModel habit) async {
     final personality = _mascotPersonalities[habit.mascot] ?? 'helpful';
 
     try {
@@ -161,14 +165,14 @@ class AIService {
       );
 
       final insight = response.choices.first.message.content?.trim();
-      return insight ?? _mockGetMascotInsight(habit);
+      return ServiceResult.success(insight ?? _mockGetMascotInsight(habit));
     } catch (e) {
-      return _mockGetMascotInsight(habit);
+      return ServiceResult.success(_mockGetMascotInsight(habit));
     }
   }
 
   /// Generates a quick pep talk for the focus session using OpenAI.
-  Future<String> getPepTalk(HabitModel habit) async {
+  Future<ServiceResult<String>> getPepTalk(HabitModel habit) async {
     final personality = _mascotPersonalities[habit.mascot] ?? 'helpful';
 
     try {
@@ -189,9 +193,9 @@ class AIService {
       );
 
       final pepTalk = response.choices.first.message.content?.trim();
-      return pepTalk ?? _mockGetPepTalk(habit);
+      return ServiceResult.success(pepTalk ?? _mockGetPepTalk(habit));
     } catch (e) {
-      return _mockGetPepTalk(habit);
+      return ServiceResult.success(_mockGetPepTalk(habit));
     }
   }
 

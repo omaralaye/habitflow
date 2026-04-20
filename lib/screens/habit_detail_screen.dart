@@ -23,7 +23,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _mascotWisdomFuture = AIService().getMascotInsight(widget.habit);
+    _mascotWisdomFuture = AIService().getMascotInsight(widget.habit).then((res) => res.data ?? 'No wisdom today.');
   }
 
   @override
@@ -76,9 +76,18 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
 
               if (confirm == true) {
                 await NotificationService().cancelHabitReminders(widget.habit.id);
-                await DatabaseService().deleteHabit(widget.habit.id);
+                final result = await DatabaseService().deleteHabit(widget.habit.id);
                 if (mounted) {
-                  Navigator.pop(context);
+                  if (result.isSuccess) {
+                    Navigator.pop(context);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Failed to delete: ${result.error?.message}'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
                 }
               }
             },
