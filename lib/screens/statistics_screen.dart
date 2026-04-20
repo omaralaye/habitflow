@@ -3,10 +3,16 @@ import '../utils/constants.dart';
 import '../services/theme_service.dart';
 import '../services/database_service.dart';
 import '../models/habit_model.dart';
+import '../widgets/state_widgets.dart';
 
-class StatisticsScreen extends StatelessWidget {
+class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
 
+  @override
+  State<StatisticsScreen> createState() => _StatisticsScreenState();
+}
+
+class _StatisticsScreenState extends State<StatisticsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -31,7 +37,27 @@ class StatisticsScreen extends StatelessWidget {
       body: StreamBuilder<Map<String, dynamic>>(
         stream: DatabaseService().statsStream,
         builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const AppLoadingWidget(message: 'Calculating stats...');
+          }
+          if (snapshot.hasError) {
+            return AppErrorWidget(
+              message: 'Failed to load statistics.',
+              onRetry: () {
+                setState(() {});
+              },
+            );
+          }
+
           final stats = snapshot.data ?? {};
+          if (stats.isEmpty) {
+            return const AppEmptyStateWidget(
+              title: 'No Data Yet',
+              message: 'Start completing habits to see your statistics here!',
+              icon: Icons.bar_chart_rounded,
+            );
+          }
+
           return SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Column(

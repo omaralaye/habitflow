@@ -5,6 +5,7 @@ import '../services/database_service.dart';
 import '../services/ai_service.dart';
 import '../models/habit_model.dart';
 import '../models/music_model.dart';
+import '../widgets/state_widgets.dart';
 
 class FocusHubScreen extends StatefulWidget {
   const FocusHubScreen({super.key});
@@ -20,6 +21,8 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
   bool _isFocusing = false;
   double _focusProgress = 0.0;
   String? _pepTalk;
+  bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -28,29 +31,42 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
   }
 
   Future<void> _loadInitialData() async {
-    final music = await DatabaseService().getMusicTracks();
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
-    // Get habits from stream - wait for first non-empty list if possible
-    final habits = await DatabaseService().habitsStream.first;
+    try {
+      final music = await DatabaseService().getMusicTracks();
+      // Get habits from stream - wait for first if possible
+      final habits = await DatabaseService().habitsStream.first;
 
-    if (mounted) {
-      setState(() {
-        _musicTracks = music;
-        if (habits.isNotEmpty) {
-          _selectedHabit = habits.first;
-          if (_selectedHabit!.musicId != null && _musicTracks.isNotEmpty) {
-            // Match by id (could be UUID from Supabase or string ID from FreeToUse)
-            _selectedMusic = _musicTracks.firstWhere(
-              (m) => m.id == _selectedHabit!.musicId,
-              orElse: () => _musicTracks.first,
-            );
+      if (mounted) {
+        setState(() {
+          _musicTracks = music;
+          _isLoading = false;
+          if (habits.isNotEmpty) {
+            _selectedHabit = habits.first;
+            if (_selectedHabit!.musicId != null && _musicTracks.isNotEmpty) {
+              _selectedMusic = _musicTracks.firstWhere(
+                (m) => m.id == _selectedHabit!.musicId,
+                orElse: () => _musicTracks.first,
+              );
+            } else if (_musicTracks.isNotEmpty) {
+              _selectedMusic = _musicTracks.first;
+            }
           } else if (_musicTracks.isNotEmpty) {
             _selectedMusic = _musicTracks.first;
           }
-        } else if (_musicTracks.isNotEmpty) {
-          _selectedMusic = _musicTracks.first;
-        }
-      });
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Failed to load Focus Hub data: $e';
+        });
+      }
     }
   }
 
@@ -136,38 +152,55 @@ class _FocusHubScreenState extends State<FocusHubScreen> {
           const SizedBox(width: 8),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildFocusCard(),
-            const SizedBox(height: 32),
-            Text(
-              'Habit Selection',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurface,
-              ),
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const AppLoadingWidget(message: 'Entering focus mode...');
+    }
+
+    if (_errorMessage != null) {
+      return AppErrorWidget(
+        message: _errorMessage!,
+        onRetry: _loadInitialData,
+      );
+    }
+
+    final theme = Theme.of(context);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildFocusCard(),
+          const SizedBox(height: 32),
+          Text(
+            'Habit Selection',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface,
             ),
-            const SizedBox(height: 16),
-            _buildHabitSelector(),
-            const SizedBox(height: 32),
-            Text(
-              'Ambient Sanctuary',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurface,
-              ),
+          ),
+          const SizedBox(height: 16),
+          _buildHabitSelector(),
+          const SizedBox(height: 32),
+          Text(
+            'Ambient Sanctuary',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface,
             ),
-            const SizedBox(height: 16),
-            _buildMusicPlayer(),
-            const SizedBox(height: 32),
-            _buildQuickStats(),
-          ],
-        ),
+          ),
+          const SizedBox(height: 16),
+          _buildMusicPlayer(),
+          const SizedBox(height: 32),
+          _buildQuickStats(),
+        ],
       ),
     );
   }

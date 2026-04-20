@@ -3,6 +3,7 @@ import '../utils/constants.dart';
 import '../services/theme_service.dart';
 import '../services/database_service.dart';
 import '../models/habit_model.dart';
+import '../widgets/state_widgets.dart';
 import 'add_habit_screen.dart';
 import 'habit_detail_screen.dart';
 
@@ -35,41 +36,30 @@ class HabitListScreen extends StatelessWidget {
         stream: DatabaseService().habitsStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const AppLoadingWidget(message: 'Loading your habits...');
           }
           if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                'Something went wrong. Please try again.',
-                style: TextStyle(color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
-              ),
+            return AppErrorWidget(
+              message: 'Failed to load habits: ${snapshot.error}',
+              onRetry: () {
+                // Trigger rebuild
+                (context as Element).markNeedsBuild();
+              },
             );
           }
           final habits = snapshot.data ?? [];
           if (habits.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.list_alt_rounded, size: 64, color: isDark ? AppColors.darkSurface : AppColors.primaryLighter),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No habits found.',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Start your journey by adding one!',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: isDark ? AppColors.darkTextSecondary.withOpacity(0.7) : AppColors.textGrey.withOpacity(0.7),
-                    ),
-                  ),
-                ],
-              ),
+            return AppEmptyStateWidget(
+              title: 'No Habits Found',
+              message: 'Start your journey by adding your first habit!',
+              icon: Icons.list_alt_rounded,
+              actionLabel: 'Add Habit',
+              onAction: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AddHabitScreen()),
+                );
+              },
             );
           }
 
