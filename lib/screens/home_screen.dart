@@ -3,9 +3,11 @@ import '../utils/constants.dart';
 import '../services/theme_service.dart';
 import '../services/database_service.dart';
 import '../models/habit_model.dart';
+import '../widgets/state_widgets.dart';
 import 'habit_detail_screen.dart';
 import 'settings_screen.dart';
 import 'focus_hub_screen.dart';
+import 'add_habit_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -117,10 +119,18 @@ class HomeScreen extends StatelessWidget {
     return StreamBuilder<List<HabitModel>>(
       stream: DatabaseService().habitsStream,
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return const SizedBox.shrink(); // Hide progress if error, grid will show error
+        }
+
         final habits = snapshot.data ?? [];
         final completedCount = habits.where((h) => h.isCompletedToday).length;
         final totalCount = habits.length;
         final progress = totalCount > 0 ? completedCount / totalCount : 0.0;
+
+        if (totalCount == 0 && snapshot.connectionState != ConnectionState.waiting) {
+          return const SizedBox.shrink();
+        }
 
         return Container(
       padding: const EdgeInsets.all(24),
@@ -205,22 +215,39 @@ class HomeScreen extends StatelessWidget {
       stream: DatabaseService().habitsStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 40),
+            child: AppLoadingWidget(message: 'Loading your sanctuary...'),
+          );
         }
         if (snapshot.hasError) {
-          return Center(
-            child: Text(
-              'Failed to load habits.',
-              style: TextStyle(color: ThemeService().isDarkMode ? AppColors.darkTextSecondary : AppColors.textGrey),
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 40),
+            child: AppErrorWidget(
+              message: 'Failed to load habits: ${snapshot.error}',
+              onRetry: () {
+                // StreamBuilder will automatically rebuild and retry if the stream is recreated or updated
+                // but for a stream, it's already listening. We can trigger a rebuild.
+                (context as Element).markNeedsBuild();
+              },
             ),
           );
         }
         final habits = snapshot.data ?? [];
         if (habits.isEmpty) {
-          return Center(
-            child: Text(
-              'No habits yet. Add one to start!',
-              style: TextStyle(color: ThemeService().isDarkMode ? AppColors.darkTextSecondary : AppColors.textGrey),
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 40),
+            child: AppEmptyStateWidget(
+              title: 'No Mascots Yet',
+              message: 'Your sanctuary is quiet. Add a habit to bring it to life!',
+              icon: Icons.pets_rounded,
+              actionLabel: 'Add Your First Habit',
+              onAction: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AddHabitScreen()),
+                );
+              },
             ),
           );
         }
@@ -249,14 +276,23 @@ class HomeScreen extends StatelessWidget {
     return GestureDetector(
       onDoubleTap: () async {
         if (!habit.isCompletedToday) {
-          await DatabaseService().completeHabit(habit.id);
+          final result = await DatabaseService().completeHabit(habit.id);
           if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('${habit.name} completed! +50 XP'),
-                duration: const Duration(seconds: 1),
-              ),
-            );
+            if (result.isSuccess) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('${habit.name} completed! +50 XP'),
+                  duration: const Duration(seconds: 1),
+                ),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Failed to complete habit: ${result.error?.message}'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
           }
         }
       },

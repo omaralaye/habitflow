@@ -1,8 +1,11 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:openai_dart/openai_dart.dart';
+import '../utils/error_handler.dart';
 import '../models/habit_model.dart';
 import '../utils/constants.dart';
+import '../utils/rate_limiter.dart';
+import 'logger_service.dart';
 
 class AIService {
   static final AIService _instance = AIService._internal();
@@ -12,8 +15,9 @@ class AIService {
   final OpenAIClient _client = OpenAIClient(apiKey: OpenAIConstants.OPENAI_API_KEY);
 
   /// Refines a habit name into something more actionable and specific using OpenAI.
-  Future<String> refineHabit(String habitName) async {
+  Future<ServiceResult<String>> refineHabit(String habitName) async {
     try {
+      return await RateLimiter.ai.run('refineHabit', () async {
       final response = await _client.createChatCompletion(
         request: CreateChatCompletionRequest(
           model: ChatCompletionModel.modelId(OpenAIConstants.OPENAI_MODEL),
@@ -31,18 +35,23 @@ class AIService {
       );
 
       final refinedName = response.choices.first.message.content?.trim();
-      return refinedName ?? habitName;
+      LoggerService().info('Habit refined by AI', tag: 'AI', data: {'original': habitName, 'refined': refinedName});
+      return ServiceResult.success(refinedName ?? habitName);
+      });
     } catch (e) {
+      if (e is RateLimitException) return ServiceResult.failure(e);
+      LoggerService().warning('AI habit refinement failed, using mock', tag: 'AI', error: e);
       // Fallback to mock logic if API fails or key is placeholder
-      return _mockRefineHabit(habitName);
+      return ServiceResult.success(_mockRefineHabit(habitName));
     }
   }
 
   /// Refines a habit and recommends a category in a single AI call.
-  Future<Map<String, String>> refineAndCategorize(String habitName) async {
+  Future<ServiceResult<Map<String, String>>> refineAndCategorize(String habitName) async {
     const categories = ['Mindfulness', 'Health', 'Studying', 'Workout', 'Productivity', 'General'];
 
     try {
+      return await RateLimiter.ai.run('refineAndCategorize', () async {
       final response = await _client.createChatCompletion(
         request: CreateChatCompletionRequest(
           model: ChatCompletionModel.modelId(OpenAIConstants.OPENAI_MODEL),
@@ -75,23 +84,37 @@ class AIService {
 
           final refined = data['refinedName']?.toString().trim();
 
-          return {
+          LoggerService().info('Habit refined and categorized by AI', tag: 'AI', data: {
+            'original': habitName,
+            'refined': refined,
+            'category': category
+          });
+
+          return ServiceResult.success({
             'refinedName': (refined != null && refined.isNotEmpty) ? refined : habitName,
             'category': category,
-          };
+          });
         }
       }
 
+      LoggerService().warning('AI refineAndCategorize returned invalid JSON, falling back', tag: 'AI', data: {'content': content});
+
       // Fallback to separate calls if JSON parsing fails
-      return {
-        'refinedName': await refineHabit(habitName),
-        'category': await recommendCategory(habitName),
-      };
+      final refinedResult = await refineHabit(habitName);
+      final categoryResult = await recommendCategory(habitName);
+
+      return ServiceResult.success({
+        'refinedName': refinedResult.data ?? habitName,
+        'category': categoryResult.data ?? 'General',
+      });
+      });
     } catch (e) {
-      return {
+      if (e is RateLimitException) return ServiceResult.failure(e);
+      LoggerService().warning('AI refineAndCategorize failed, using mock', tag: 'AI', error: e);
+      return ServiceResult.success({
         'refinedName': _mockRefineHabit(habitName),
         'category': _mockRecommendCategory(habitName),
-      };
+      });
     }
   }
 
@@ -109,10 +132,11 @@ class AIService {
   }
 
   /// Recommends a category for a habit based on its name using OpenAI.
-  Future<String> recommendCategory(String habitName) async {
+  Future<ServiceResult<String>> recommendCategory(String habitName) async {
     const categories = ['Mindfulness', 'Health', 'Studying', 'Workout', 'Productivity', 'General'];
 
     try {
+      return await RateLimiter.ai.run('recommendCategory', () async {
       final response = await _client.createChatCompletion(
         request: CreateChatCompletionRequest(
           model: ChatCompletionModel.modelId(OpenAIConstants.OPENAI_MODEL),
@@ -131,19 +155,22 @@ class AIService {
 
       final category = response.choices.first.message.content?.trim();
       if (category != null && categories.contains(category)) {
-        return category;
+        return ServiceResult.success(category);
       }
-      return _mockRecommendCategory(habitName);
+      return ServiceResult.success(_mockRecommendCategory(habitName));
+      });
     } catch (e) {
-      return _mockRecommendCategory(habitName);
+      if (e is RateLimitException) return ServiceResult.failure(e);
+      return ServiceResult.success(_mockRecommendCategory(habitName));
     }
   }
 
   /// Generates a personalized insight from the mascot based on its personality using OpenAI.
-  Future<String> getMascotInsight(HabitModel habit) async {
+  Future<ServiceResult<String>> getMascotInsight(HabitModel habit) async {
     final personality = _mascotPersonalities[habit.mascot] ?? 'helpful';
 
     try {
+      return await RateLimiter.ai.run('getMascotInsight', () async {
       final response = await _client.createChatCompletion(
         request: CreateChatCompletionRequest(
           model: ChatCompletionModel.modelId(OpenAIConstants.OPENAI_MODEL),
@@ -161,17 +188,20 @@ class AIService {
       );
 
       final insight = response.choices.first.message.content?.trim();
-      return insight ?? _mockGetMascotInsight(habit);
+      return ServiceResult.success(insight ?? _mockGetMascotInsight(habit));
+      });
     } catch (e) {
-      return _mockGetMascotInsight(habit);
+      if (e is RateLimitException) return ServiceResult.failure(e);
+      return ServiceResult.success(_mockGetMascotInsight(habit));
     }
   }
 
   /// Generates a quick pep talk for the focus session using OpenAI.
-  Future<String> getPepTalk(HabitModel habit) async {
+  Future<ServiceResult<String>> getPepTalk(HabitModel habit) async {
     final personality = _mascotPersonalities[habit.mascot] ?? 'helpful';
 
     try {
+      return await RateLimiter.ai.run('getPepTalk', () async {
       final response = await _client.createChatCompletion(
         request: CreateChatCompletionRequest(
           model: ChatCompletionModel.modelId(OpenAIConstants.OPENAI_MODEL),
@@ -189,9 +219,11 @@ class AIService {
       );
 
       final pepTalk = response.choices.first.message.content?.trim();
-      return pepTalk ?? _mockGetPepTalk(habit);
+      return ServiceResult.success(pepTalk ?? _mockGetPepTalk(habit));
+      });
     } catch (e) {
-      return _mockGetPepTalk(habit);
+      if (e is RateLimitException) return ServiceResult.failure(e);
+      return ServiceResult.success(_mockGetPepTalk(habit));
     }
   }
 

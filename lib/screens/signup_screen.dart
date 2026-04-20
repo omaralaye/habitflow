@@ -34,30 +34,29 @@ class _SignupScreenState extends State<SignupScreen> {
   Future<void> _handleSignup() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      try {
-        await AuthService().signUp(
-          _emailController.text.trim(),
-          _passwordController.text,
-          name: _nameController.text.trim(),
-          emoji: _selectedEmoji,
-        );
-        if (mounted) {
+
+      final result = await AuthService().signUp(
+        _emailController.text.trim(),
+        _passwordController.text,
+        name: _nameController.text.trim(),
+        emoji: _selectedEmoji,
+      );
+
+      if (mounted) {
+        if (result.isSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Signup successful')),
           );
           await NavigationHelper.navigateAfterAuth(context);
-        }
-      } catch (e) {
-        if (mounted) {
+        } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Signup failed: ${e.toString()}'),
+              content: Text('Signup failed: ${result.error?.message}'),
               backgroundColor: Colors.red,
             ),
           );
         }
-      } finally {
-        if (mounted) setState(() => _isLoading = false);
+        setState(() => _isLoading = false);
       }
     }
   }

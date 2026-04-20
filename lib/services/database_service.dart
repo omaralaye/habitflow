@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../utils/error_handler.dart';
 import '../models/habit_model.dart';
 import '../models/music_model.dart';
 import 'music_service.dart';
+import '../utils/rate_limiter.dart';
+import 'logger_service.dart';
 
 class DatabaseService {
   static DatabaseService? _instance;
@@ -25,7 +28,7 @@ class DatabaseService {
 
   Stream<List<HabitModel>> get habitsStream {
     if (_uid == null) {
-      debugPrint('habitsStream: _uid is null');
+      LoggerService().warning('habitsStream: _uid is null', tag: 'DB');
       return Stream.value([]);
     }
 
@@ -57,91 +60,184 @@ class DatabaseService {
             }
             return habits;
           } catch (e) {
-            debugPrint('Error in habitsStream: $e');
+            LoggerService().error('Error in habitsStream', tag: 'DB', error: e);
             return [];
           }
         });
   }
 
-  Future<HabitModel?> addHabit(HabitModel habit) async {
-    if (_uid == null) return null;
-    final habitData = _habitToSupabase(habit);
+  Future<ServiceResult<HabitModel?>> addHabit(HabitModel habit) async {
+    if (_uid == null) return ServiceResult.failure('Not authenticated');
 
-    // Ensure music_id is a valid UUID or null
-    if (habitData['music_id'] != null) {
-      final musicId = habitData['music_id'].toString();
-      if (musicId.length < 36) { // Basic check for non-UUID strings from mock data
-        habitData['music_id'] = null;
+    try {
+      return await RateLimiter.db.run('addHabit', () async {
+      final habitData = _habitToSupabase(habit);
+
+      // Ensure music_id is a valid UUID or null
+      if (habitData['music_id'] != null) {
+        final musicId = habitData['music_id'].toString();
+        if (musicId.length < 36) { // Basic check for non-UUID strings from mock data
+          habitData['music_id'] = null;
+        }
       }
+
+      final response = await _supabase.from('habits').insert({
+        ...habitData,
+        'user_id': _uid,
+      }).select().single();
+
+      final newHabit = _habitFromSupabase(response, []);
+      LoggerService().action('Habit added', tag: 'DB', data: {'habitId': newHabit.id, 'name': newHabit.name});
+      return ServiceResult.success(newHabit);
+      });
+    } catch (e) {
+      LoggerService().error('Failed to add habit', tag: 'DB', error: e);
+      return ServiceResult.failure(e);
     }
-
-    final response = await _supabase.from('habits').insert({
-      ...habitData,
-      'user_id': _uid,
-    }).select().single();
-
-    return _habitFromSupabase(response, []);
   }
 
   Future<bool> hasHabits() async {
     if (_uid == null) return false;
-    final response = await _supabase
-        .from('habits')
-        .select('id')
-        .eq('user_id', _uid!)
-        .limit(1);
-    return (response as List).isNotEmpty;
-  }
-
-  Future<void> updateHabit(HabitModel habit) async {
-    if (_uid == null) return;
-    final habitData = _habitToSupabase(habit);
-
-    // Ensure music_id is a valid UUID or null
-    if (habitData['music_id'] != null) {
-      final musicId = habitData['music_id'].toString();
-      if (musicId.length < 36) { // Basic check for non-UUID strings from mock data
-        habitData['music_id'] = null;
-      }
+    try {
+      final response = await _supabase
+          .from('habits')
+          .select('id')
+          .eq('user_id', _uid!)
+          .limit(1);
+      return (response as List).isNotEmpty;
+    } catch (e) {
+      LoggerService().error('Error checking for habits', tag: 'DB', error: e);
+      return false;
     }
-
-    await _supabase
-        .from('habits')
-        .update(habitData)
-        .eq('id', habit.id);
   }
 
-  Future<void> deleteHabit(String habitId) async {
-    if (_uid == null) return;
-    await _supabase.from('habits').delete().eq('id', habitId);
+  Future<ServiceResult<void>> updateHabit(HabitModel habit) async {
+    if (_uid == null) return ServiceResult.failure('Not authenticated');
+
+    try {
+      final habitData = _habitToSupabase(habit);
+
+      // Ensure music_id is a valid UUID or null
+      if (habitData['music_id'] != null) {
+        final musicId = habitData['music_id'].toString();
+        if (musicId.length < 36) { // Basic check for non-UUID strings from mock data
+          habitData['music_id'] = null;
+        }
+      }
+
+      await _supabase
+          .from('habits')
+          .update(habitData)
+          .eq('id', habit.id);
+      LoggerService().action('Habit updated', tag: 'DB', data: {'habitId': habit.id, 'name': habit.name});
+      return ServiceResult.success(null);
+    } catch (e) {
+      LoggerService().error('Failed to update habit', tag: 'DB', error: e, data: {'habitId': habit.id});
+      return ServiceResult.failure(e);
+    }
   }
 
-  Future<void> completeHabit(String habitId) async {
-    if (_uid == null) return;
+  Future<ServiceResult<void>> deleteHabit(String habitId) async {
+    if (_uid == null) return ServiceResult.failure('Not authenticated');
+    try {
+      await _supabase.from('habits').delete().eq('id', habitId);
+      LoggerService().action('Habit deleted', tag: 'DB', data: {'habitId': habitId});
+      return ServiceResult.success(null);
+    } catch (e) {
+      LoggerService().error('Failed to delete habit', tag: 'DB', error: e, data: {'habitId': habitId});
+      return ServiceResult.failure(e);
+    }
+  }
+
+  Future<ServiceResult<void>> completeHabit(String habitId) async {
+    if (_uid == null) return ServiceResult.failure('Not authenticated');
+
+    try {
+      return await RateLimiter.db.run('completeHabit_$habitId', () async {
+    final today = DateTime.now().toIso8601String().split('T')[0];
+
+    // 0. Check if already completed today
+    final existingCompletion = await _supabase
+        .from('habit_completions')
+        .select('id')
+        .eq('habit_id', habitId)
+        .eq('completed_at', today)
+        .maybeSingle();
+
+    if (existingCompletion != null) return ServiceResult.success(null);
 
     // 1. Add completion record
     await _supabase.from('habit_completions').insert({
       'habit_id': habitId,
       'user_id': _uid,
-      'completed_at': DateTime.now().toIso8601String().split('T')[0],
+      'completed_at': today,
     });
 
-    // 2. Update habit streak
-    final habitResponse = await _supabase.from('habits').select('streak').eq('id', habitId).single();
-    final currentStreak = habitResponse['streak'] as int? ?? 0;
-    await _supabase.from('habits').update({'streak': currentStreak + 1}).eq('id', habitId);
+    // 2. Update habit streak and mascot level
+    final habitResponse = await _supabase
+        .from('habits')
+        .select('streak, mascot_level')
+        .eq('id', habitId)
+        .single();
+
+    int currentStreak = habitResponse['streak'] as int? ?? 0;
+    int mascotLevel = habitResponse['mascot_level'] as int? ?? 1;
+
+    // Streak logic: check last completion
+    final lastCompletionResponse = await _supabase
+        .from('habit_completions')
+        .select('completed_at')
+        .eq('habit_id', habitId)
+        .neq('completed_at', today)
+        .order('completed_at', ascending: false)
+        .limit(1)
+        .maybeSingle();
+
+    if (lastCompletionResponse != null) {
+      final lastDate = DateTime.parse(lastCompletionResponse['completed_at']);
+      final diff = DateTime.now().difference(lastDate).inDays;
+      if (diff == 1) {
+        currentStreak += 1;
+      } else {
+        currentStreak = 1;
+      }
+    } else {
+      currentStreak = 1;
+    }
+
+    // Mascot leveling: every 10 total completions
+    final countResponse = await _supabase
+        .from('habit_completions')
+        .select()
+        .eq('habit_id', habitId)
+        .count(CountOption.exact);
+
+    final totalCompletions = countResponse.count;
+
+    if (totalCompletions > 0 && totalCompletions % 10 == 0) {
+      mascotLevel += 1;
+    }
+
+    await _supabase.from('habits').update({
+      'streak': currentStreak,
+      'mascot_level': mascotLevel,
+    }).eq('id', habitId);
+
+    LoggerService().action('Habit completed', tag: 'DB', data: {
+      'habitId': habitId,
+      'newStreak': currentStreak,
+      'newMascotLevel': mascotLevel
+    });
 
     // 3. Award XP to user
     final profileResponse = await _supabase.from('profiles').select('xp, level').eq('id', _uid!).single();
     int currentXp = profileResponse['xp'] as int? ?? 0;
     int currentLevel = profileResponse['level'] as int? ?? 1;
 
-    currentXp += 50; // Award 50 XP per habit
+    currentXp += 50;
 
-    // Check for level up: level * 500 XP per level
-    int nextLevelXp = currentLevel * 500;
-    if (currentXp >= nextLevelXp) {
-      currentXp -= nextLevelXp;
+    while (currentXp >= (currentLevel * 500)) {
+      currentXp -= (currentLevel * 500);
       currentLevel += 1;
     }
 
@@ -149,6 +245,69 @@ class DatabaseService {
       'xp': currentXp,
       'level': currentLevel,
     }).eq('id', _uid!);
+
+      // 4. Check for milestones
+      await _checkAndAwardMilestones();
+      return ServiceResult.success(null);
+      });
+    } catch (e) {
+      LoggerService().error('Failed to complete habit', tag: 'DB', error: e, data: {'habitId': habitId});
+      return ServiceResult.failure(e);
+    }
+  }
+
+  Future<void> _checkAndAwardMilestones() async {
+    if (_uid == null) return;
+
+    // Get all milestones user hasn't unlocked yet
+    final allMilestones = await getAllMilestones();
+    final unlockedMilestonesResponse = await _supabase
+        .from('user_milestones')
+        .select('milestone_id')
+        .eq('user_id', _uid!);
+
+    final unlockedIds = (unlockedMilestonesResponse as List).map((m) => m['milestone_id'].toString()).toSet();
+    final pendingMilestones = allMilestones.where((m) => !unlockedIds.contains(m['id'].toString())).toList();
+
+    if (pendingMilestones.isEmpty) return;
+
+    // Get user stats for checking
+    final habitsResponse = await _supabase.from('habits').select('streak').eq('user_id', _uid!);
+    final habits = habitsResponse as List;
+    final maxStreak = habits.isEmpty ? 0 : habits.map((h) => h['streak'] as int).reduce((a, b) => a > b ? a : b);
+
+    final completionsCountResponse = await _supabase
+        .from('habit_completions')
+        .select()
+        .eq('user_id', _uid!)
+        .count(CountOption.exact);
+
+    final totalCompletions = completionsCountResponse.count;
+
+    for (var milestone in pendingMilestones) {
+      bool shouldUnlock = false;
+      final type = milestone['requirement_type'];
+      final value = milestone['requirement_value'] as int? ?? 0;
+
+      if (type == 'streak' && maxStreak >= value) {
+        shouldUnlock = true;
+      } else if (type == 'total_completed' && totalCompletions >= value) {
+        shouldUnlock = true;
+      } else if (type == 'first_habit' && habits.isNotEmpty) {
+        shouldUnlock = true;
+      }
+
+      if (shouldUnlock) {
+        await _supabase.from('user_milestones').insert({
+          'user_id': _uid,
+          'milestone_id': milestone['id'],
+        });
+        LoggerService().action('Milestone unlocked', tag: 'DB', data: {
+          'milestoneId': milestone['id'],
+          'name': milestone['name']
+        });
+      }
+    }
   }
 
   Stream<Map<String, dynamic>> get profileStream {
@@ -209,11 +368,11 @@ class DatabaseService {
     )).toList();
 
     // 2. Fetch from Free To Use API and merge
-    try {
-      final freeTracks = await MusicService().fetchFreeToUseMusic();
-      tracks.addAll(freeTracks);
-    } catch (e) {
-      debugPrint('Error merging Free To Use Music: $e');
+    final freeTracksResult = await MusicService().fetchFreeToUseMusic();
+    if (freeTracksResult.isSuccess) {
+      tracks.addAll(freeTracksResult.data ?? []);
+    } else {
+      LoggerService().error('Error merging Free To Use Music', tag: 'DB', error: freeTracksResult.error);
     }
 
     return tracks;

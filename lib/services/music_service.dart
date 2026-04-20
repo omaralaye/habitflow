@@ -1,15 +1,19 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../utils/error_handler.dart';
 import '../models/music_model.dart';
 import '../utils/constants.dart';
+import '../utils/rate_limiter.dart';
+import 'logger_service.dart';
 
 class MusicService {
   static final MusicService _instance = MusicService._internal();
   factory MusicService() => _instance;
   MusicService._internal();
 
-  Future<List<MusicModel>> fetchFreeToUseMusic({int limit = 100}) async {
+  Future<ServiceResult<List<MusicModel>>> fetchFreeToUseMusic({int limit = 100}) async {
     try {
+      return await RateLimiter.music.run('fetchFreeToUseMusic', () async {
       final response = await http.get(
         Uri.parse('${MusicConstants.BASE_DATA_URL}/music/tracks/all?limit=$limit&order=release_date'),
       );
@@ -17,7 +21,7 @@ class MusicService {
       if (response.statusCode == 200) {
         final Map<String, dynamic> body = jsonDecode(response.body);
         if (body['ok'] == true && body['data'] is List) {
-          return (body['data'] as List).where((track) => track['id'] != null).map((track) {
+          final tracks = (body['data'] as List).where((track) => track['id'] != null).map((track) {
             final String id = track['id'].toString();
             final String title = track['title'] ?? 'Unknown Title';
 
@@ -83,12 +87,16 @@ class MusicService {
               url: url,
             );
           }).toList();
+          LoggerService().info('Fetched Free To Use Music', tag: 'MUSIC', data: {'count': tracks.length});
+          return ServiceResult.success(tracks);
         }
       }
-      return [];
+      LoggerService().warning('Failed to fetch music or empty data', tag: 'MUSIC', data: {'statusCode': response.statusCode});
+      return ServiceResult.success([]);
+      });
     } catch (e) {
-      print('Error fetching music: $e');
-      return [];
+      LoggerService().error('Error in fetchFreeToUseMusic', tag: 'MUSIC', error: e);
+      return ServiceResult.failure(e);
     }
   }
 }

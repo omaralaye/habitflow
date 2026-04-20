@@ -23,7 +23,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _mascotWisdomFuture = AIService().getMascotInsight(widget.habit);
+    _mascotWisdomFuture = AIService().getMascotInsight(widget.habit).then((res) => res.data ?? 'No wisdom today.');
   }
 
   @override
@@ -76,9 +76,18 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
 
               if (confirm == true) {
                 await NotificationService().cancelHabitReminders(widget.habit.id);
-                await DatabaseService().deleteHabit(widget.habit.id);
+                final result = await DatabaseService().deleteHabit(widget.habit.id);
                 if (mounted) {
-                  Navigator.pop(context);
+                  if (result.isSuccess) {
+                    Navigator.pop(context);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Failed to delete: ${result.error?.message}'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
                 }
               }
             },
@@ -183,9 +192,9 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
     final theme = Theme.of(context);
     final isDark = ThemeService().isDarkMode;
 
-    // Calculate evolution progress based on mascot level (mock logic: level 1-5)
-    // If progress is not available, use habit progress as fallback
-    final double evolutionProgress = (habit.progress / 100).clamp(0.0, 1.0);
+    // Mascot evolves every 10 completions.
+    final int totalCompletions = habit.completedDays.length;
+    final double evolutionProgress = (totalCompletions % 10) / 10.0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -194,7 +203,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'EVOLUTION PROGRESS',
+              'PROGRESS TO LVL ${habit.mascotLevel + 1}',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
@@ -203,7 +212,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
               ),
             ),
             Text(
-              '${(evolutionProgress * 100).toInt()}%',
+              '${totalCompletions % 10} / 10',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
@@ -225,8 +234,8 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> with SingleTicker
         const SizedBox(height: 12),
         Text(
           evolutionProgress >= 0.9
-              ? 'Your ${habit.mascot.name} is about to evolve!'
-              : 'Keep going to evolve your ${habit.mascot.name}!',
+              ? 'Your ${habit.mascot.name} is about to reach Level ${habit.mascotLevel + 1}!'
+              : 'Complete ${10 - (totalCompletions % 10)} more sessions to reach Level ${habit.mascotLevel + 1}!',
           style: TextStyle(
             fontSize: 12,
             color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey,

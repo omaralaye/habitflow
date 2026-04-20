@@ -4,6 +4,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
 import '../models/habit_model.dart';
+import 'logger_service.dart';
 
 class NotificationService {
   static NotificationService _instance = NotificationService._internal();
@@ -22,8 +23,9 @@ class NotificationService {
     try {
       final TimezoneInfo timezoneInfo = await FlutterTimezone.getLocalTimezone();
       tz.setLocalLocation(tz.getLocation(timezoneInfo.identifier));
+      LoggerService().info('Timezone initialized: ${timezoneInfo.identifier}', tag: 'NOTIF');
     } catch (e) {
-      debugPrint('Error setting local timezone: $e');
+      LoggerService().error('Error setting local timezone', tag: 'NOTIF', error: e);
     }
 
     const AndroidInitializationSettings initializationSettingsAndroid =
@@ -99,6 +101,7 @@ class NotificationService {
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         matchDateTimeComponents: DateTimeComponents.time,
       );
+      LoggerService().info('Scheduled start reminder', tag: 'NOTIF', data: {'habitId': habit.id, 'time': habit.startReminderTime.toString()});
     } else {
       await _notificationsPlugin.cancel(id: baseId);
     }
@@ -136,6 +139,7 @@ class NotificationService {
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         matchDateTimeComponents: DateTimeComponents.time,
       );
+      LoggerService().info('Scheduled end reminder', tag: 'NOTIF', data: {'habitId': habit.id, 'time': habit.endReminderTime.toString()});
     } else {
       await _notificationsPlugin.cancel(id: baseId + 1);
     }

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import '../services/mock_data_service.dart';
 import '../utils/constants.dart';
 import '../services/theme_service.dart';
 import '../services/database_service.dart';
 import '../services/ai_service.dart';
 import '../models/habit_model.dart';
 import '../models/music_model.dart';
+import '../widgets/state_widgets.dart';
 import '../widgets/main_navigation.dart';
 import '../services/notification_service.dart';
 
@@ -64,20 +64,20 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     if (name.isEmpty) return;
 
     setState(() => _isRefining = true);
-    try {
-      final result = await AIService().refineAndCategorize(name);
+    final result = await AIService().refineAndCategorize(name);
 
-      if (mounted) {
+    if (mounted) {
+      if (result.isSuccess) {
+        final data = result.data!;
         setState(() {
-          _nameController.text = result['refinedName'] ?? name;
-          _selectedCategory = result['category'] ?? 'General';
+          _nameController.text = data['refinedName'] ?? name;
+          _selectedCategory = data['category'] ?? 'General';
           _selectedMusicId = null; // Reset music when category changes
-          _isRefining = false;
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('AI suggested the "${result['category']}" category and updated your tracks!'),
+            content: Text('AI suggested the "${data['category']}" category and updated your tracks!'),
             backgroundColor: AppColors.primary,
             behavior: SnackBarBehavior.floating,
           ),
@@ -93,9 +93,15 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
             );
           }
         });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('AI suggestion failed: ${result.error?.message}'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
-    } catch (e) {
-      if (mounted) setState(() => _isRefining = false);
+      setState(() => _isRefining = false);
     }
   }
 
@@ -145,15 +151,29 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                 endReminderTime: _selectedEndTime,
               );
 
-              try {
-                HabitModel? savedHabit;
-                if (isEditing) {
-                  await _databaseService.updateHabit(habit);
-                  savedHabit = habit;
-                } else {
-                  savedHabit = await _databaseService.addHabit(habit);
-                }
+              HabitModel? savedHabit;
+              bool success = false;
+              String? errorMessage;
 
+              if (isEditing) {
+                final result = await _databaseService.updateHabit(habit);
+                if (result.isSuccess) {
+                  savedHabit = habit;
+                  success = true;
+                } else {
+                  errorMessage = result.error?.message;
+                }
+              } else {
+                final result = await _databaseService.addHabit(habit);
+                if (result.isSuccess) {
+                  savedHabit = result.data;
+                  success = true;
+                } else {
+                  errorMessage = result.error?.message;
+                }
+              }
+
+              if (success) {
                 if (savedHabit != null) {
                   // Schedule notification with the correct ID
                   await NotificationService().scheduleHabitReminders(savedHabit);
@@ -175,11 +195,11 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                 } else {
                   Navigator.pop(context);
                 }
-              } catch (e) {
+              } else {
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Error: ${e.toString()}'),
+                    content: Text('Error: $errorMessage'),
                     backgroundColor: Colors.red,
                   ),
                 );
@@ -376,8 +396,19 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
           return const Center(
             child: Padding(
               padding: EdgeInsets.all(16.0),
-              child: CircularProgressIndicator(color: AppColors.primary),
+              child: AppLoadingWidget(message: 'Tuning instruments...'),
             ),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return AppErrorWidget(
+            message: 'Failed to load music tracks.',
+            onRetry: () {
+              setState(() {
+                _musicTracksFuture = _databaseService.getMusicTracks();
+              });
+            },
           );
         }
 
@@ -391,16 +422,16 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
         }
 
         if (musicTracks.isEmpty) {
-          return Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurface : AppColors.primaryLighter,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Text(
-              'No music tracks available at the moment.',
-              style: TextStyle(color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
-            ),
+          return AppEmptyStateWidget(
+            title: 'No Music Tracks',
+            message: 'We couldn\'t find any music for this category.',
+            icon: Icons.music_off_rounded,
+            actionLabel: 'Retry Loading',
+            onAction: () {
+              setState(() {
+                _musicTracksFuture = _databaseService.getMusicTracks();
+              });
+            },
           );
         }
 

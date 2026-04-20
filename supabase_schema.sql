@@ -151,3 +151,49 @@ CREATE TRIGGER update_profiles_updated_at
 CREATE TRIGGER update_habits_updated_at
     BEFORE UPDATE ON habits
     FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
+
+-- Rate limiting for habit creation (prevent spam)
+CREATE OR REPLACE FUNCTION check_habit_rate_limit()
+RETURNS TRIGGER AS $$
+DECLARE
+  habit_count INTEGER;
+BEGIN
+  SELECT count(*) INTO habit_count
+  FROM habits
+  WHERE user_id = auth.uid()
+    AND created_at > NOW() - INTERVAL '1 minute';
+
+  IF habit_count >= 5 THEN
+    RAISE EXCEPTION 'Rate limit exceeded: You can only create 5 habits per minute.';
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER habit_rate_limit_trigger
+  BEFORE INSERT ON habits
+  FOR EACH ROW EXECUTE PROCEDURE check_habit_rate_limit();
+
+-- Rate limiting for habit completions
+CREATE OR REPLACE FUNCTION check_completion_rate_limit()
+RETURNS TRIGGER AS $$
+DECLARE
+  completion_count INTEGER;
+BEGIN
+  SELECT count(*) INTO completion_count
+  FROM habit_completions
+  WHERE user_id = auth.uid()
+    AND created_at > NOW() - INTERVAL '1 minute';
+
+  IF completion_count >= 10 THEN
+    RAISE EXCEPTION 'Rate limit exceeded: Too many completions in a short period.';
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER completion_rate_limit_trigger
+  BEFORE INSERT ON habit_completions
+  FOR EACH ROW EXECUTE PROCEDURE check_completion_rate_limit();

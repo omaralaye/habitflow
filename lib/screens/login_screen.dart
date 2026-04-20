@@ -29,28 +29,27 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      try {
-        await AuthService().signIn(
-          _emailController.text.trim(),
-          _passwordController.text,
-        );
-        if (mounted) {
+
+      final result = await AuthService().signIn(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
+
+      if (mounted) {
+        if (result.isSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Login successful')),
           );
           await NavigationHelper.navigateAfterAuth(context);
-        }
-      } catch (e) {
-        if (mounted) {
+        } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Login failed: ${e.toString()}'),
+              content: Text('Login failed: ${result.error?.message}'),
               backgroundColor: Colors.red,
             ),
           );
         }
-      } finally {
-        if (mounted) setState(() => _isLoading = false);
+        setState(() => _isLoading = false);
       }
     }
   }
