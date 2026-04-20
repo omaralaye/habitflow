@@ -4,6 +4,7 @@ import '../utils/error_handler.dart';
 import '../models/habit_model.dart';
 import '../models/music_model.dart';
 import 'music_service.dart';
+import '../utils/rate_limiter.dart';
 
 class DatabaseService {
   static DatabaseService? _instance;
@@ -68,6 +69,7 @@ class DatabaseService {
     if (_uid == null) return ServiceResult.failure('Not authenticated');
 
     try {
+      return await RateLimiter.db.run('addHabit', () async {
       final habitData = _habitToSupabase(habit);
 
       // Ensure music_id is a valid UUID or null
@@ -84,6 +86,7 @@ class DatabaseService {
       }).select().single();
 
       return ServiceResult.success(_habitFromSupabase(response, []));
+      });
     } catch (e) {
       return ServiceResult.failure(e);
     }
@@ -142,7 +145,7 @@ class DatabaseService {
     if (_uid == null) return ServiceResult.failure('Not authenticated');
 
     try {
-
+      return await RateLimiter.db.run('completeHabit_$habitId', () async {
     final today = DateTime.now().toIso8601String().split('T')[0];
 
     // 0. Check if already completed today
@@ -232,6 +235,7 @@ class DatabaseService {
       // 4. Check for milestones
       await _checkAndAwardMilestones();
       return ServiceResult.success(null);
+      });
     } catch (e) {
       return ServiceResult.failure(e);
     }

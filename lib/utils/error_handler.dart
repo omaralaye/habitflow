@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:openai_dart/openai_dart.dart';
 import 'package:http/http.dart' as http;
+import 'rate_limiter.dart';
 
 /// A standardized application error that provides safe, user-facing information.
 class AppError {
@@ -36,7 +37,10 @@ class AppError {
     String message = 'An unexpected error occurred. Please try again later.';
     String code = 'INTERNAL_ERROR';
 
-    if (error is AuthException) {
+    if (error is RateLimitException) {
+      message = '${error.message} Please try again in ${error.retryAfter.inSeconds} seconds.';
+      code = 'RATE_LIMIT_EXCEEDED';
+    } else if (error is AuthException) {
       message = error.message;
       code = 'AUTH_${error.statusCode ?? 'ERROR'}';
     } else if (error is PostgrestException) {

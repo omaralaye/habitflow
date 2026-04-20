@@ -4,6 +4,7 @@ import 'package:openai_dart/openai_dart.dart';
 import '../utils/error_handler.dart';
 import '../models/habit_model.dart';
 import '../utils/constants.dart';
+import '../utils/rate_limiter.dart';
 
 class AIService {
   static final AIService _instance = AIService._internal();
@@ -15,6 +16,7 @@ class AIService {
   /// Refines a habit name into something more actionable and specific using OpenAI.
   Future<ServiceResult<String>> refineHabit(String habitName) async {
     try {
+      return await RateLimiter.ai.run('refineHabit', () async {
       final response = await _client.createChatCompletion(
         request: CreateChatCompletionRequest(
           model: ChatCompletionModel.modelId(OpenAIConstants.OPENAI_MODEL),
@@ -33,7 +35,9 @@ class AIService {
 
       final refinedName = response.choices.first.message.content?.trim();
       return ServiceResult.success(refinedName ?? habitName);
+      });
     } catch (e) {
+      if (e is RateLimitException) return ServiceResult.failure(e);
       // Fallback to mock logic if API fails or key is placeholder
       return ServiceResult.success(_mockRefineHabit(habitName));
     }
@@ -44,6 +48,7 @@ class AIService {
     const categories = ['Mindfulness', 'Health', 'Studying', 'Workout', 'Productivity', 'General'];
 
     try {
+      return await RateLimiter.ai.run('refineAndCategorize', () async {
       final response = await _client.createChatCompletion(
         request: CreateChatCompletionRequest(
           model: ChatCompletionModel.modelId(OpenAIConstants.OPENAI_MODEL),
@@ -91,7 +96,9 @@ class AIService {
         'refinedName': refinedResult.data ?? habitName,
         'category': categoryResult.data ?? 'General',
       });
+      });
     } catch (e) {
+      if (e is RateLimitException) return ServiceResult.failure(e);
       return ServiceResult.success({
         'refinedName': _mockRefineHabit(habitName),
         'category': _mockRecommendCategory(habitName),
@@ -117,6 +124,7 @@ class AIService {
     const categories = ['Mindfulness', 'Health', 'Studying', 'Workout', 'Productivity', 'General'];
 
     try {
+      return await RateLimiter.ai.run('recommendCategory', () async {
       final response = await _client.createChatCompletion(
         request: CreateChatCompletionRequest(
           model: ChatCompletionModel.modelId(OpenAIConstants.OPENAI_MODEL),
@@ -138,7 +146,9 @@ class AIService {
         return ServiceResult.success(category);
       }
       return ServiceResult.success(_mockRecommendCategory(habitName));
+      });
     } catch (e) {
+      if (e is RateLimitException) return ServiceResult.failure(e);
       return ServiceResult.success(_mockRecommendCategory(habitName));
     }
   }
@@ -148,6 +158,7 @@ class AIService {
     final personality = _mascotPersonalities[habit.mascot] ?? 'helpful';
 
     try {
+      return await RateLimiter.ai.run('getMascotInsight', () async {
       final response = await _client.createChatCompletion(
         request: CreateChatCompletionRequest(
           model: ChatCompletionModel.modelId(OpenAIConstants.OPENAI_MODEL),
@@ -166,7 +177,9 @@ class AIService {
 
       final insight = response.choices.first.message.content?.trim();
       return ServiceResult.success(insight ?? _mockGetMascotInsight(habit));
+      });
     } catch (e) {
+      if (e is RateLimitException) return ServiceResult.failure(e);
       return ServiceResult.success(_mockGetMascotInsight(habit));
     }
   }
@@ -176,6 +189,7 @@ class AIService {
     final personality = _mascotPersonalities[habit.mascot] ?? 'helpful';
 
     try {
+      return await RateLimiter.ai.run('getPepTalk', () async {
       final response = await _client.createChatCompletion(
         request: CreateChatCompletionRequest(
           model: ChatCompletionModel.modelId(OpenAIConstants.OPENAI_MODEL),
@@ -194,7 +208,9 @@ class AIService {
 
       final pepTalk = response.choices.first.message.content?.trim();
       return ServiceResult.success(pepTalk ?? _mockGetPepTalk(habit));
+      });
     } catch (e) {
+      if (e is RateLimitException) return ServiceResult.failure(e);
       return ServiceResult.success(_mockGetPepTalk(habit));
     }
   }
