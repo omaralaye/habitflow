@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'utils/constants.dart';
+import 'utils/env_validator.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/add_habit_screen.dart';
 import 'widgets/main_navigation.dart';
@@ -10,6 +11,9 @@ import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Validate environment variables before initialization
+  EnvValidator.validate();
 
   await Supabase.initialize(
     url: SupabaseConstants.SUPABASE_URL,
