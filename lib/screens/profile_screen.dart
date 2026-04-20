@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/constants.dart';
 import '../services/theme_service.dart';
 import '../services/database_service.dart';
+import '../widgets/state_widgets.dart';
 import 'settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -43,44 +44,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(width: 8),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: StreamBuilder<Map<String, dynamic>>(
-          stream: DatabaseService().profileStream,
-          builder: (context, profileSnapshot) {
-            final profile = profileSnapshot.data;
-            final int level = profile?['level'] ?? 1;
-            final int xp = profile?['xp'] ?? 0;
+      body: StreamBuilder<Map<String, dynamic>>(
+        stream: DatabaseService().profileStream,
+        builder: (context, profileSnapshot) {
+          if (profileSnapshot.connectionState == ConnectionState.waiting) {
+            return const AppLoadingWidget(message: 'Loading profile...');
+          }
+          if (profileSnapshot.hasError) {
+            return AppErrorWidget(
+              message: 'Failed to load profile data.',
+              onRetry: () {
+                setState(() {});
+              },
+            );
+          }
 
-            return Column(
+          final profile = profileSnapshot.data;
+          if (profile == null) {
+             return const AppErrorWidget(message: 'Profile not found.');
+          }
+
+          final int level = profile['level'] ?? 1;
+          final int xp = profile['xp'] ?? 0;
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
               children: [
-                _buildProfileCard(context),
+                _buildProfileCard(context, profile),
                 const SizedBox(height: 24),
                 _buildMilestones(context),
                 const SizedBox(height: 24),
                 _buildGlobalRank(context, level, xp),
               ],
-            );
-          }
-        ),
+            ),
+          );
+        }
       ),
     );
   }
 
-  Widget _buildProfileCard(BuildContext context) {
+  Widget _buildProfileCard(BuildContext context, Map<String, dynamic> profile) {
     final theme = Theme.of(context);
     final isDark = ThemeService().isDarkMode;
 
-    return StreamBuilder<Map<String, dynamic>>(
-      stream: DatabaseService().profileStream,
-      builder: (context, snapshot) {
-        final profile = snapshot.data;
-        final String name = profile?['name'] ?? (snapshot.connectionState == ConnectionState.waiting ? 'Loading...' : 'User');
-        final String emoji = profile?['emoji'] ?? '🦊';
-        final int level = profile?['level'] ?? 1;
-        final int xp = profile?['xp'] ?? 0;
+    final String name = profile['name'] ?? 'User';
+    final String emoji = profile['emoji'] ?? '🦊';
+    final int level = profile['level'] ?? 1;
+    final int xp = profile['xp'] ?? 0;
 
-        return Container(
+    return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         color: theme.cardTheme.color,
@@ -132,8 +145,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _buildXPProgress(context, xp, level),
         ],
       ),
-    );
-      },
     );
   }
 
@@ -205,6 +216,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
           FutureBuilder<List<Map<String, dynamic>>>(
             future: _allMilestonesFuture,
             builder: (context, allSnapshot) {
+              if (allSnapshot.connectionState == ConnectionState.waiting) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(20.0),
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                );
+              }
+              if (allSnapshot.hasError) {
+                return Center(
+                  child: Text(
+                    'Failed to load milestones.',
+                    style: TextStyle(color: theme.colorScheme.error, fontSize: 12),
+                  ),
+                );
+              }
+
               return StreamBuilder<List<Map<String, dynamic>>>(
                 stream: DatabaseService().userMilestonesStream,
                 builder: (context, unlockedSnapshot) {
@@ -213,7 +241,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   final unlockedIds = unlockedMilestones.map((m) => m['id']).toSet();
 
                   if (allMilestones.isEmpty) {
-                    return const Center(child: Text('No milestones yet'));
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(20.0),
+                        child: Text('No milestones available yet.'),
+                      ),
+                    );
                   }
 
                   return ListView.separated(

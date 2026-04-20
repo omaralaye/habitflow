@@ -5,6 +5,7 @@ import '../services/database_service.dart';
 import '../services/ai_service.dart';
 import '../models/habit_model.dart';
 import '../models/music_model.dart';
+import '../widgets/state_widgets.dart';
 import '../widgets/main_navigation.dart';
 import '../services/notification_service.dart';
 
@@ -395,8 +396,19 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
           return const Center(
             child: Padding(
               padding: EdgeInsets.all(16.0),
-              child: CircularProgressIndicator(color: AppColors.primary),
+              child: AppLoadingWidget(message: 'Tuning instruments...'),
             ),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return AppErrorWidget(
+            message: 'Failed to load music tracks.',
+            onRetry: () {
+              setState(() {
+                _musicTracksFuture = _databaseService.getMusicTracks();
+              });
+            },
           );
         }
 
@@ -410,16 +422,16 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
         }
 
         if (musicTracks.isEmpty) {
-          return Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurface : AppColors.primaryLighter,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Text(
-              'No music tracks available at the moment.',
-              style: TextStyle(color: isDark ? AppColors.darkTextSecondary : AppColors.textGrey),
-            ),
+          return AppEmptyStateWidget(
+            title: 'No Music Tracks',
+            message: 'We couldn\'t find any music for this category.',
+            icon: Icons.music_off_rounded,
+            actionLabel: 'Retry Loading',
+            onAction: () {
+              setState(() {
+                _musicTracksFuture = _databaseService.getMusicTracks();
+              });
+            },
           );
         }
 
